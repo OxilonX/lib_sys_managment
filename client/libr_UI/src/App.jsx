@@ -1,10 +1,17 @@
-import Structure from "./Structure";
-function App() {
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Layout from "./Layout";
+import AuthPage from "./pages/AuthPage";
+import HomePage from "./pages/HomePage";
+
+export default function App() {
   return (
-    <>
-      <Structure />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<AuthPage />} />
+          <Route path="/home" element={<HomePage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;

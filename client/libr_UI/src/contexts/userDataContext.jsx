@@ -5,29 +5,8 @@ const UsersContext = createContext(null);
 export function UsersProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [userLoading, setUserLoading] = useState(false);
+  const [currUser, setCurrUser] = useState({});
 
-  async function loginUser(userData) {
-    setUserLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: userData.email,
-          password: userData.password,
-        }),
-      });
-      const data = await res.json();
-
-      if (!data.success) {
-        return data;
-      }
-
-      return data;
-    } finally {
-      setUserLoading(false);
-    }
-  }
   async function addUser(userData) {
     setUserLoading(true);
     try {
@@ -64,13 +43,37 @@ export function UsersProvider({ children }) {
   useEffect(() => {
     fetchUsers();
   }, []);
+  async function loginUser(userData) {
+    setUserLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userData.email,
+          password: userData.password,
+        }),
+      });
+      const data = await res.json();
 
+      if (!data.success) {
+        setCurrUser({ success: false });
+        return data;
+      }
+      setCurrUser(data.user);
+      return data;
+    } finally {
+      setUserLoading(false);
+    }
+  }
   const userValue = {
     users,
     userLoading,
+    currUser,
     fetchUsers,
     addUser,
     loginUser,
+    setCurrUser,
   };
 
   return (

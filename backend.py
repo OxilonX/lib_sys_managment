@@ -25,29 +25,18 @@ def login():
     email = data.get("email")
     password = data.get("password")
 
-    print(f"Searching for email: '{email}'")
-    print(f"Password attempt: '{password}'")
-
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("SELECT * FROM users WHERE email = ?", (email,))
     user = cur.fetchone()
 
-    print(f"User found: {user}")
-
     if user is None:
-        print("RETURNING: Email not found")  # ADD THIS
         return jsonify({"success": False, "msg": "Email not found"})
 
-    print(f"Stored password: '{user['password']}'")  # ADD THIS
-    print(f"Passwords match: {user['password'] == password}")  # ADD THIS
-
     if user["password"] != password:
-        print("RETURNING: Wrong password")  # ADD THIS
         return jsonify({"success": False, "msg": "Wrong password"})
 
-    print("RETURNING: Success!")  # ADD THIS
     return jsonify({"success": True, "msg": "Logged in", "user": dict(user)})
 
 
@@ -78,12 +67,16 @@ def add_user():
         phone,
         role,
     ]
-
-    if any(field is None for field in required):
-        return jsonify({"error": "Missing required fields"}), 400
-
     conn = get_db()
     cur = conn.cursor()
+    if any(field is None for field in required):
+        return jsonify({"message": "Missing required fields"}), 400
+    cur.execute("SELECT 1 FROM users WHERE email = ?", (email,))
+    exists = cur.fetchone()
+
+    if exists:
+        conn.close()
+        return jsonify({"message": "Email already registered"}), 409
 
     cur.execute(
         """

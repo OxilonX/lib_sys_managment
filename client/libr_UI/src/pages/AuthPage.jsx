@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUsersData } from "../contexts/userDataContext";
+import { useNavigate } from "react-router-dom";
 //STYLES
 import "../styles/authpg.css";
 //MUI COMPONENTS
@@ -17,11 +18,10 @@ import {
 } from "@mui/material";
 
 export default function AuthPage() {
-  const { addUser, loginUser } = useUsersData();
+  const navigate = useNavigate();
+  const { addUser, loginUser, userLoading, currUser, setCurrUser } =
+    useUsersData();
   const [pickedTab, setPickedTab] = useState(1);
-  const [currUser, setcurrUser] = useState({
-    success: true,
-  });
   const [userInfo, setUserInfo] = useState({
     fname: "",
     lname: "",
@@ -58,26 +58,11 @@ export default function AuthPage() {
     e.preventDefault();
     if (pickedTab === 0) {
       if (!validateSignup(userInfo)) {
-        alert("validate your infos");
+        console.log("validate your info");
         return;
       }
       await addUser(userInfo);
-      setUserInfo({
-        fname: "",
-        lname: "",
-        age: "",
-        state: "student",
-        username: "",
-        email: "",
-        password: "",
-        address: "",
-        phone: "",
-        role: "user",
-        is_subscribed: 0,
-      });
-    } else {
-      const data = await loginUser(userInfo);
-      setcurrUser(data);
+      if (!userLoading) setPickedTab(1);
       setUserInfo({
         fname: "",
         lname: "",
@@ -92,6 +77,28 @@ export default function AuthPage() {
         is_subscribed: 0,
       });
     }
+  }
+  async function handleLoginClick() {
+    const data = await loginUser(userInfo);
+    if (data.success) {
+      console.log(data);
+      navigate("/home");
+    } else {
+      setCurrUser({ success: data.success, msg: data.msg });
+    }
+    setUserInfo({
+      fname: "",
+      lname: "",
+      age: "",
+      state: "student",
+      username: "",
+      email: "",
+      password: "",
+      address: "",
+      phone: "",
+      role: "user",
+      is_subscribed: 0,
+    });
   }
   return (
     <section className="authpage-container">
@@ -216,6 +223,21 @@ export default function AuthPage() {
                             onChange={handleInputChange}
                           />
                         </Stack>
+                        <Button
+                          variant="contained"
+                          sx={{
+                            paddingY: "10px",
+                            fontSize: "1rem",
+                            borderRadius: "4px",
+                            boxShadow: "none",
+                            ":hover": {
+                              boxShadow: "none",
+                            },
+                          }}
+                          onClick={(e) => handleSignUpClick(e)}
+                        >
+                          Sign UP
+                        </Button>
                       </>
                     </>
                   );
@@ -238,30 +260,31 @@ export default function AuthPage() {
                           type="password"
                           label="Password"
                           value={userInfo.password}
-                          helperText={!currUser.success ? currUser.msg : ""}
+                          helperText={
+                            !currUser.success ? currUser.msg : currUser.msg
+                          }
                           onChange={handleInputChange}
                         />
                       </Stack>
+                      <Button
+                        variant="contained"
+                        sx={{
+                          paddingY: "10px",
+                          fontSize: "1rem",
+                          borderRadius: "4px",
+                          boxShadow: "none",
+                          ":hover": {
+                            boxShadow: "none",
+                          },
+                        }}
+                        onClick={() => handleLoginClick()}
+                      >
+                        Login
+                      </Button>
                     </>
                   );
                 }
               })()}
-
-              <Button
-                variant="contained"
-                sx={{
-                  paddingY: "10px",
-                  fontSize: "1rem",
-                  borderRadius: "4px",
-                  boxShadow: "none",
-                  ":hover": {
-                    boxShadow: "none",
-                  },
-                }}
-                onClick={(e) => handleSignUpClick(e)}
-              >
-                {pickedTab === 0 ? "Sign UP" : "Login"}
-              </Button>
             </form>
           </div>
         </Container>

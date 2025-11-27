@@ -22,11 +22,12 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL,
     address TEXT NOT NULL,
     phone TEXT NOT NULL, 
-    role TEXT NOT NULL CHECK (role IN ('admin', 'user')),
+    role TEXT NOT NULL CHECK (role IN ('admin', 'user')) DEFAULT 'user' ,
     is_subscribed INTEGER DEFAULT 0
 );
 """
 )
+# cur.execute("UPDATE users SET role = 'admin' WHERE email= ?", ("a@gmail.com",))
 # cur.execute("DELETE FROM users")
 # cur.execute("DELETE FROM sqlite_sequence WHERE name='users'")
 conn.commit()
