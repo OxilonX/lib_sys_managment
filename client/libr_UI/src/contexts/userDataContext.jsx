@@ -1,15 +1,37 @@
 import { createContext, useContext, useState, useEffect } from "react";
-
+const API_BASE = "http://localhost:5000/api/";
 const UsersContext = createContext(null);
 
 export function UsersProvider({ children }) {
   const [users, setUsers] = useState([]);
-  const [userLoading, setLoading] = useState(false);
+  const [userLoading, setUserLoading] = useState(false);
 
-  async function addUser(userData) {
-    setLoading(true);
+  async function loginUser(userData) {
+    setUserLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/users", {
+      const res = await fetch(`${API_BASE}login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userData.email,
+          password: userData.password,
+        }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        return data;
+      }
+
+      return data;
+    } finally {
+      setUserLoading(false);
+    }
+  }
+  async function addUser(userData) {
+    setUserLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
@@ -22,21 +44,21 @@ export function UsersProvider({ children }) {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setUserLoading(false);
     }
   }
 
   async function fetchUsers() {
-    setLoading(true);
+    setUserLoading(true);
     try {
-      const res = await fetch("/api/users");
+      const res = await fetch(`${API_BASE}users`);
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
       setUsers(data || []);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setUserLoading(false);
     }
   }
   useEffect(() => {
@@ -48,6 +70,7 @@ export function UsersProvider({ children }) {
     userLoading,
     fetchUsers,
     addUser,
+    loginUser,
   };
 
   return (

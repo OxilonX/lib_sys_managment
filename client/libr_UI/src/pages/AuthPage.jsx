@@ -17,8 +17,11 @@ import {
 } from "@mui/material";
 
 export default function AuthPage() {
-  const { addUser } = useUsersData();
+  const { addUser, loginUser } = useUsersData();
   const [pickedTab, setPickedTab] = useState(1);
+  const [currUser, setcurrUser] = useState({
+    success: true,
+  });
   const [userInfo, setUserInfo] = useState({
     fname: "",
     lname: "",
@@ -51,26 +54,44 @@ export default function AuthPage() {
       [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
     }));
   };
-  async function handleAddUserClick(e) {
+  async function handleSignUpClick(e) {
     e.preventDefault();
-    if (!validateSignup(userInfo)) {
-      console.log("validate ur info");
-      return;
+    if (pickedTab === 0) {
+      if (!validateSignup(userInfo)) {
+        alert("validate your infos");
+        return;
+      }
+      await addUser(userInfo);
+      setUserInfo({
+        fname: "",
+        lname: "",
+        age: "",
+        state: "student",
+        username: "",
+        email: "",
+        password: "",
+        address: "",
+        phone: "",
+        role: "user",
+        is_subscribed: 0,
+      });
+    } else {
+      const data = await loginUser(userInfo);
+      setcurrUser(data);
+      setUserInfo({
+        fname: "",
+        lname: "",
+        age: "",
+        state: "student",
+        username: "",
+        email: "",
+        password: "",
+        address: "",
+        phone: "",
+        role: "user",
+        is_subscribed: 0,
+      });
     }
-    await addUser(userInfo);
-    setUserInfo({
-      fname: "",
-      lname: "",
-      age: "",
-      state: "kid",
-      username: "",
-      email: "",
-      password: "",
-      address: "",
-      phone: "",
-      role: "user",
-      is_subscribed: 0,
-    });
   }
   return (
     <section className="authpage-container">
@@ -101,7 +122,7 @@ export default function AuthPage() {
                 />
               </Tabs>
             </div>
-            <form className="signup-form">
+            <form action={"/api/login"} method="post" className="signup-form">
               {(() => {
                 if (pickedTab === 0) {
                   return (
@@ -217,6 +238,7 @@ export default function AuthPage() {
                           type="password"
                           label="Password"
                           value={userInfo.password}
+                          helperText={!currUser.success ? currUser.msg : ""}
                           onChange={handleInputChange}
                         />
                       </Stack>
@@ -236,7 +258,7 @@ export default function AuthPage() {
                     boxShadow: "none",
                   },
                 }}
-                onClick={(e) => handleAddUserClick(e)}
+                onClick={(e) => handleSignUpClick(e)}
               >
                 {pickedTab === 0 ? "Sign UP" : "Login"}
               </Button>

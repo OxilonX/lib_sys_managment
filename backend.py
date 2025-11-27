@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route("/users", methods=["GET"])
+@app.route("/api/users", methods=["GET"])
 def get_users():
     conn = get_db()
     cur = conn.cursor()
@@ -15,7 +15,43 @@ def get_users():
     return jsonify([dict(row) for row in rows])
 
 
-@app.route("/users", methods=["POST"])
+@app.route("/api/login", methods=["POST", "GET"])
+def login():
+    data = request.get_json(force=True)
+
+    if not data:
+        return jsonify({"success": False, "msg": "No data received"}), 400
+
+    email = data.get("email")
+    password = data.get("password")
+
+    print(f"Searching for email: '{email}'")
+    print(f"Password attempt: '{password}'")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cur.fetchone()
+
+    print(f"User found: {user}")
+
+    if user is None:
+        print("RETURNING: Email not found")  # ADD THIS
+        return jsonify({"success": False, "msg": "Email not found"})
+
+    print(f"Stored password: '{user['password']}'")  # ADD THIS
+    print(f"Passwords match: {user['password'] == password}")  # ADD THIS
+
+    if user["password"] != password:
+        print("RETURNING: Wrong password")  # ADD THIS
+        return jsonify({"success": False, "msg": "Wrong password"})
+
+    print("RETURNING: Success!")  # ADD THIS
+    return jsonify({"success": True, "msg": "Logged in", "user": dict(user)})
+
+
+@app.route("/api/users", methods=["POST"])
 def add_user():
     data = request.json
     fname = data.get("fname")
