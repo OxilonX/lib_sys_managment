@@ -1,0 +1,22 @@
+# Root .gitignore for the repository
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Python artifacts
+/__pycache__
+*.py[cod]
+*.pyo
+
+# Virtual environment folders
+venv/
+tutovenv/
+
+# Node modules (if any subprojects use node)
+node_modules/
+
+# macOS and editor files
+.DS_Store
+.vscode/
