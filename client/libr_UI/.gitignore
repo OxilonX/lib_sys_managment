@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+#local environment files
+.env
+/tutoenv
+*.env
 
 # Editor directories and files
 .vscode/*
