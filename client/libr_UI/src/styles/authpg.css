@@ -1,0 +1,27 @@
+.authpage-container{
+     display: flex;
+    align-items: start;
+    justify-content: center;
+    height: 100vh;
+    background-color: #1f1f1f;
+}
+.auth-content{
+    filter: invert(1);
+    margin: 50px 0;
+}
+.auth-page{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.signup-form{
+    display: flex;
+    flex-direction: column;
+    gap:16px;
+}
+.user-inp{
+    width: 100%;
+}
+.user-sec-inp {
+    width: 50%;
+}
