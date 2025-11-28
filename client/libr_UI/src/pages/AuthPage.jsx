@@ -56,6 +56,7 @@ export default function AuthPage() {
   };
   async function handleSignUpClick(e) {
     e.preventDefault();
+
     if (pickedTab === 0) {
       if (!validateSignup(userInfo)) {
         console.log("validate your info");

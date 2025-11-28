@@ -27,8 +27,9 @@ CREATE TABLE IF NOT EXISTS users (
 );
 """
 )
+cur.execute("DELETE FROM users WHERE age= ?", ("",))
 # cur.execute("UPDATE users SET role = 'admin' WHERE email= ?", ("a@gmail.com",))
-# cur.execute("DELETE FROM users")
+# cur.execute("DELETE FROM users WHERE age= ?",("",))
 # cur.execute("DELETE FROM sqlite_sequence WHERE name='users'")
 conn.commit()
 conn.close()
