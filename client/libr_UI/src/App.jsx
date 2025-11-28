@@ -1,16 +1,24 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
+//pages Imports
 import AuthPage from "./pages/AuthPage";
-import HomePage from "./pages/HomePage";
-
+import ExplorePage from "./pages/explorePage";
+import Trending from "./pages/TrendingPage";
+import DashboardPage from "./pages/DashboardPage";
+import Mybooks from "./pages/MybooksPage";
+import ProfilePage from "./pages/ProfilePage";
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<AuthPage />} />
-          <Route path="/home" element={<HomePage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/explore" element={<Layout />}>
+          <Route index element={<ExplorePage />} />
+          <Route path="trending" element={<Trending />} />
+          <Route path="mybooks" element={<Mybooks />} />
+          <Route path="dashboard" element={<DashboardPage />} />
         </Route>
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </BrowserRouter>
   );

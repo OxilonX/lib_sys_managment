@@ -5,7 +5,7 @@ const UsersContext = createContext(null);
 export function UsersProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [userLoading, setUserLoading] = useState(false);
-  const [currUser, setCurrUser] = useState({});
+  const [currUser, setCurrUser] = useState({ success: false, user: {} });
 
   async function addUser(userData) {
     setUserLoading(true);
@@ -60,7 +60,7 @@ export function UsersProvider({ children }) {
         setCurrUser({ success: false });
         return data;
       }
-      setCurrUser(data.user);
+      setCurrUser({ success: true, user: data.user });
       return data;
     } finally {
       setUserLoading(false);

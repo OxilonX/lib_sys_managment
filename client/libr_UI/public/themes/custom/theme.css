@@ -1,0 +1,22 @@
+:root {
+  /* ----- Core Colors ----- */
+  --background-color: #0e0e0e;      /* Deep modern black */
+  --surface-color: #161616;         /* Slightly lighter surface panels */
+  --text-color: #e6e6e6;            /* Light gray for readability */
+  --text-muted-color: #a1a1a1;      /* Muted secondary text */
+
+  /* ----- Accent Colors ----- */
+  --primary-color: #ff7a1a;         /* Vibrant modern orange */
+  --primary-hover-color: #e96b12;   /* Darker orange for hover */
+  --primary-contrast-text: #ffffff; /* Text on orange */
+
+  /* ----- Status Colors (dark-theme tuned) ----- */
+  --success-color: #28d27d;
+  --info-color: #32b9e4;
+  --warning-color: #ffc857;
+  --danger-color: #ff4d4d;
+
+  /* ----- Borders ----- */
+  --border-color: #2a2a2a;
+  --border-light: #3a3a3a;
+}

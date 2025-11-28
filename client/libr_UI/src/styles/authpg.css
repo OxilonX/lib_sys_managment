@@ -3,10 +3,9 @@
     align-items: start;
     justify-content: center;
     height: 100vh;
-    background-color: #1f1f1f;
+    background-color: #ebebeb;
 }
 .auth-content{
-    filter: invert(1);
     margin: 50px 0;
 }
 .auth-page{

@@ -83,7 +83,7 @@ export default function AuthPage() {
     const data = await loginUser(userInfo);
     if (data.success) {
       console.log(data);
-      navigate("/home");
+      navigate("/explore");
     } else {
       setCurrUser({ success: data.success, msg: data.msg });
     }

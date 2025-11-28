@@ -1,6 +1,5 @@
 import { useUsersData } from "../contexts/userDataContext";
-export default function HomePage() {
+export default function ExplorePage() {
   const { currUser, setCurrUser } = useUsersData();
-
-  return;
+  return <section id="explore-page"></section>;
 }
