@@ -1,0 +1,29 @@
+
+.p-menubar{
+    background-color: var(--background-secondary);
+}
+.p-menubar *{
+     transition: all 0.3s ease; 
+}
+.p-menuitem, .p-menuitem-text,.p-menuitem-link{
+    color: var( --text-color);
+}
+.p-menuitem-icon{
+    filter: brightness(50%);
+}
+.p-menuitem-link:hover {
+  background-color:  var(--background-teritary);
+}
+.user-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight:600;
+    background-color: var(--primary-color);
+    border: 3px solid transparent ;
+    scale: 0.8;
+}
+.user-icon:hover{
+      border: 3px solid  var(--primary-hover-color);
+} 

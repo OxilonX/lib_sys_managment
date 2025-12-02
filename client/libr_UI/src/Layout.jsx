@@ -10,10 +10,11 @@ import { useNavigate, Outlet } from "react-router-dom";
 import { Menubar } from "primereact/menubar";
 import { InputText } from "primereact/inputtext";
 import { Avatar } from "primereact/avatar";
+
 //App logo Import
 import logo from "./assets/icons/librix-logo.png";
 export default function Layout() {
-  const { currUser, setCurrUser } = useUsersData();
+  const { currUser } = useUsersData();
   const navigate = useNavigate();
   const [items, _] = useState([
     {
@@ -22,7 +23,7 @@ export default function Layout() {
       className: "menu-item",
       command: () => navigate("/explore"),
     },
-    ...(currUser.user.role === "admin"
+    ...(currUser.user.role === "admin" || currUser.user.role === "user" || true
       ? [
           {
             label: "Dashboard",
@@ -66,7 +67,7 @@ export default function Layout() {
       <Avatar
         label={currUser?.user.username?.charAt(0).toUpperCase() || "U"}
         shape="circle"
-        className="p-button-primary p-4"
+        className="user-icon p-button-primary p-4"
         onClick={() => {
           if (!currUser.success) {
             navigate("/login");

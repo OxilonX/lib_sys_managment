@@ -1,14 +1,18 @@
 import sqlite3
+from flask import g
 
 
 def get_db():
-    conn = sqlite3.connect("data.db")
-    conn.row_factory = sqlite3.Row
-    return conn
+    if "db" not in g:
+        g.db = sqlite3.connect("./database.py")
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON;")
+    return g.db
 
 
 conn = sqlite3.connect("data.db")
 cur = conn.cursor()
+# Users Table
 cur.execute(
     """
 CREATE TABLE IF NOT EXISTS users (
@@ -27,9 +31,59 @@ CREATE TABLE IF NOT EXISTS users (
 );
 """
 )
-cur.execute("DELETE FROM users WHERE age= ?", ("",))
+# Books Table
+cur.execute(
+    """
+CREATE TABLE IF NOT EXISTS books (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    catalog_code TEXT UNIQUE,
+    title TEXT NOT NULL,
+    theme_id INTEGER,
+    publisher_id INTEGER,
+    FOREIGN KEY (theme_id) REFERENCES Theme(id),
+    FOREIGN KEY (publisher_id) REFERENCES Publisher(id)
+);
+"""
+)
+# Themes Table
+cur.execute(
+    """CREATE TABLE IF NOT EXISTS themes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE
+);"""
+)
+# Authors Table
+cur.execute(
+    """CREATE TABLE IF NOT EXISTS authors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    firstname TEXT,
+    lastname TEXT NOT NULL
+);
+"""
+)
+# Publishers Table
+cur.execute(
+    """
+CREATE TABLE IF NOT EXISTS publishers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    address TEXT
+)
+"""
+)
+
+# Keywords Table
+cur.execute(
+    """
+CREATE TABLE IF NOT EXISTS keyword (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    word TEXT UNIQUE
+)
+"""
+)
+
+# Delete users with empty age row
+# cur.execute("DELETE FROM users WHERE age= ?", ("",))
 # cur.execute("UPDATE users SET role = 'admin' WHERE email= ?", ("a@gmail.com",))
 # cur.execute("DELETE FROM users WHERE age= ?",("",))
 # cur.execute("DELETE FROM sqlite_sequence WHERE name='users'")
-conn.commit()
-conn.close()

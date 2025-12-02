@@ -1,5 +1,11 @@
+:root{
+    --focus-ring: black;
+}
 body{
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+section{
+    background: var(--background-color);
 }

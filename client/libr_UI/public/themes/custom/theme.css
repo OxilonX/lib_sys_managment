@@ -1,22 +1,23 @@
 :root {
-  /* ----- Core Colors ----- */
-  --background-color: #0e0e0e;      /* Deep modern black */
-  --surface-color: #161616;         /* Slightly lighter surface panels */
-  --text-color: #e6e6e6;            /* Light gray for readability */
-  --text-muted-color: #a1a1a1;      /* Muted secondary text */
+  /* ----- Core Colors (Light Theme) ----- */
+  --background-color: #f7f7f7;       /* Main background: very light gray */
+  --background-secondary: #e0e0e0;   /* Slightly darker panel/background */
+  --background-tertiary: #cfcfcf;    /* Even darker gray for sections/cards */  --surface-color: #efefef;          /* Slightly darker panels */
+  --text-color: #1a1a1a;             /* Dark text for readability */
+  --text-muted-color: #555555;       /* Muted secondary text */
 
-  /* ----- Accent Colors ----- */
-  --primary-color: #ff7a1a;         /* Vibrant modern orange */
-  --primary-hover-color: #e96b12;   /* Darker orange for hover */
-  --primary-contrast-text: #ffffff; /* Text on orange */
+  /* ----- Accent Colors (MUI Blue) ----- */
+  --primary-color: #90caf9;         /* Soft pastel blue */
+  --primary-hover-color: #64b5f6;   /* Slightly darker for hover */
+  --primary-contrast-text: #1a1a1a; /* Dark text looks better than white on soft blue */  /* White text on blue */
 
-  /* ----- Status Colors (dark-theme tuned) ----- */
-  --success-color: #28d27d;
-  --info-color: #32b9e4;
-  --warning-color: #ffc857;
-  --danger-color: #ff4d4d;
+  /* ----- Status Colors (Light-theme tuned) ----- */
+  --success-color: #2e7d32;          /* MUI green 700 */
+  --info-color: #0288d1;             /* MUI light blue 600 */
+  --warning-color: #ed6c02;          /* MUI orange 700 */
+  --danger-color: #d32f2f;           /* MUI red 700 */
 
   /* ----- Borders ----- */
-  --border-color: #2a2a2a;
-  --border-light: #3a3a3a;
+  --border-color: #d3d3d3;           /* Soft border gray */
+  --border-light: #e3e3e3;           /* Very light border */
 }
