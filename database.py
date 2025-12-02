@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS books (
     title TEXT NOT NULL,
     theme_id INTEGER,
     publisher_id INTEGER,
+    poster TEXT NOT NULL,
     FOREIGN KEY (theme_id) REFERENCES Theme(id),
     FOREIGN KEY (publisher_id) REFERENCES Publisher(id)
 );
