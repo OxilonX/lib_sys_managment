@@ -1,7 +1,58 @@
 import "../styles/dashboardpg.css";
+//Prime React imports
+import { InputText } from "primereact/inputtext";
+import { FloatLabel } from "primereact/floatlabel";
+import { useState } from "react";
+//MUI imports
+import Container from "@mui/material/Container";
 export default function DashboardPage() {
-  //only curruser.role admin can enter needed in this component to not reach it from url
-  return <section className="dasboard-page">
-    
-  </section>;
+  //data table in prime react u need it for users list
+  const [bookInputVal, setBookInputVal] = useState({
+    title: "",
+    catCode: "",
+    location: "",
+    theme: "",
+    poster: "",
+    authors: [],
+    publishers: [],
+  });
+  //generate unique cat code
+  const [usedCodes, setUsedCodes] = useState(new Set());
+  function generateCode(length = 8) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < length; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return code;
+  }
+
+  function getUniqueCode() {
+    let code;
+    do {
+      code = generateCode();
+    } while (usedCodes.has(code));
+
+    setUsedCodes((prev) => new Set(prev).add(code));
+    return code;
+  }
+  return (
+    <section className="dasboard-page">
+      <Container>
+        <h1 style={{ padding: "50px 0 24px", margin: "0" }}>
+          Add A New Book :
+        </h1>
+        <div className="flex flex-col justify-content-start">
+          <FloatLabel>
+            <InputText id="book-title" value={bookInputVal.title} />
+            <label htmlFor="book-title">Book Title</label>
+          </FloatLabel>
+          <FloatLabel>
+            <InputText id="book-location" value={bookInputVal.location} />
+            <label htmlFor="book-location">location</label>
+          </FloatLabel>
+        </div>
+      </Container>
+    </section>
+  );
 }

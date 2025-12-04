@@ -1,9 +1,20 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-from database import get_db
+from database import get_db, init_db
+
 
 app = Flask(__name__)
 CORS(app)
+
+with app.app_context():
+    init_db()
+
+
+@app.teardown_appcontext
+def close_db(exception):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
 
 
 @app.route("/api/users", methods=["GET"])
@@ -11,7 +22,6 @@ def get_users():
     conn = get_db()
     cur = conn.cursor()
     rows = cur.execute("SELECT * FROM users").fetchall()
-    conn.close()
     return jsonify([dict(row) for row in rows])
 
 
@@ -75,7 +85,6 @@ def add_user():
     exists = cur.fetchone()
 
     if exists:
-        conn.close()
         return jsonify({"message": "Email already registered"}), 409
 
     cur.execute(
@@ -100,7 +109,6 @@ def add_user():
     )
 
     conn.commit()
-    conn.close()
 
     return jsonify({"message": "user added"}), 201
 
