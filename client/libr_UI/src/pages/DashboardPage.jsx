@@ -42,15 +42,27 @@ export default function DashboardPage() {
         <h1 style={{ padding: "50px 0 24px", margin: "0" }}>
           Add A New Book :
         </h1>
-        <div className="flex flex-col justify-content-start">
+        <div
+          className="flex justify-content-start gap-2 "
+          style={{ flexDirection: "column" }}
+        >
           <FloatLabel>
-            <InputText id="book-title" value={bookInputVal.title} />
+            <InputText
+              className="book-inp-item "
+              id="book-title"
+              value={bookInputVal.title}
+            />
             <label htmlFor="book-title">Book Title</label>
           </FloatLabel>
           <FloatLabel>
-            <InputText id="book-location" value={bookInputVal.location} />
+            <InputText
+              className="book-inp-item"
+              id="book-location"
+              value={bookInputVal.location}
+            />
             <label htmlFor="book-location">location</label>
           </FloatLabel>
+          <div id="theme-pick"></div>
         </div>
       </Container>
     </section>
