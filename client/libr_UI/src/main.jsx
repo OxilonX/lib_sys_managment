@@ -14,7 +14,7 @@ import "primereact/resources/themes/bootstrap4-light-blue/theme.css"; // theme
 import "primereact/resources/primereact.min.css"; // core css
 import "primeicons/primeicons.css"; // icons
 import "primeflex/primeflex.css";
-import "../public/themes/custom/theme.css";
+import "./themes/custom/theme.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
