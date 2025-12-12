@@ -27,34 +27,20 @@ def close_db(exception):
 def add_new_book():
     db = get_db()
     cursor = db.cursor()
+    data = request.json
+    title = data.get("title")
+    shelf = data.get("shelf")
+    theme = data.get("theme")
+    catCode = data.get("catCode")
+    authors = data.get("authors")
+    publishers = data.get("publishers")
 
-    # 1. DATA EXTRACTION AND INITIAL PARSING
-    try:
-        title = request.form.get("title")
-        cat_code = request.form.get("catCode")
-        location = request.form.get("location")
-        theme_name = request.form.get("theme")
-
-        # Parse JSON arrays sent via FormData
-        authors = request.form.get("authors")
-        publishers = request.form.get("publishers")
-        # authors = json.loads(request.form.get("authors", "[]"))
-        # publishers = json.loads(request.form.get("publishers", "[]"))
-
-    except Exception as e:
-        # Catch errors if request.form or json.loads fails unexpectedly
-        return (
-            jsonify({"error": "Invalid data format received", "details": str(e)}),
-            400,
-        )
-
-    # 2. VALIDATION
     if not all(
         [
             title,
-            cat_code,
-            location,
-            theme_name,
+            catCode,
+            shelf,
+            theme,
             authors,
             publishers,
         ]
@@ -68,27 +54,23 @@ def add_new_book():
             400,
         )
 
-    # 3. TRANSACTION START
     try:
-        # Process Relationships (Themes)
-        theme_id = get_or_create_id("themes", theme_name, "name")
+        theme_id = get_or_create_id("themes", theme, "name")
 
-        # Insert Main Book Record
         cursor.execute(
             """
             INSERT INTO books (catalog_code, title,location, theme_id, )
             VALUES (?, ?, ?, ?, )
             """,
             (
-                cat_code,
+                catCode,
                 title,
-                location,
+                shelf,
                 theme_id,
             ),
         )
         book_id = cursor.lastrowid
 
-        # Handle Jointure Tables (This commits inside the helper functions)
         insert_book_authors(book_id, authors)
         insert_book_publishers(book_id, publishers)
 
@@ -96,7 +78,6 @@ def add_new_book():
 
     except sqlite3.IntegrityError as e:
         db.rollback()
-        # Catches duplicate catalog_code, etc.
         return jsonify({"error": "Database constraint failed.", "details": str(e)}), 409
 
     except Exception as e:

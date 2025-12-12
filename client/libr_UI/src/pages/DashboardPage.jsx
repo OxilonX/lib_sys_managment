@@ -16,7 +16,6 @@ import "../styles/dashboardpg.css";
 import { useBooksData } from "../contexts/booksDataContext";
 export default function DashboardPage() {
   const { submitNewBook, books, setBooks } = useBooksData();
-  const [selectedTheme, setselectedTheme] = useState("");
 
   // Single State Hook for All Inputs
   const [bookInputVal, setBookInputVal] = useState({
@@ -25,8 +24,8 @@ export default function DashboardPage() {
     shelf: "",
     theme: "",
     poster: "",
-    authors: [],
-    publishers: [],
+    authors: { authors: [] },
+    publishers: { publishers: [] },
   });
 
   const handleInputChange = (e) => {
@@ -84,16 +83,14 @@ export default function DashboardPage() {
       shelf: "",
       theme: "",
       poster: "",
-      authors: [],
-      publishers: [],
+      authors: { authors: [] },
+      publishers: { publishers: [] },
     });
   };
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
     if (!validateBookInput(bookInputVal)) {
       console.log(
-        "Please fill in all required fields (Title, shelf, theme Authors, Publishers, Poster)."
+        "Please fill in all required fields (Title, shelf, theme ,Authors, Publishers, Poster)."
       );
       return;
     }
@@ -105,7 +102,7 @@ export default function DashboardPage() {
       setBooks((prev) => [...prev, result]);
       resetForm();
     } catch (error) {
-      console.error("Submission Error:", error);
+      console.error("add book request Submission Error:", error);
       alert(`Failed to add book: ${error.message}`);
     }
   };
@@ -193,7 +190,6 @@ export default function DashboardPage() {
               </Button>
             </div>
           </form>
-          <p>sadsad</p>
         </div>
       </Container>
     </section>

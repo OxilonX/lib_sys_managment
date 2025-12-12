@@ -6,21 +6,13 @@ export function BooksProvider({ children }) {
   const [books, setBooks] = useState([]);
 
   async function submitNewBook(bookData) {
-    const formData = new FormData();
-
-    formData.append("title", bookData.title);
-    formData.append("catCode", bookData.catCode);
-    formData.append("location", bookData.location);
-    formData.append("theme", bookData.theme);
-    formData.append("poster", JSON.stringify(bookData.poster));
-
-    formData.append("authors", JSON.stringify(bookData.authors));
-    formData.append("publishers", JSON.stringify(bookData.publishers));
     const response = await fetch("/api/books", {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(bookData),
     });
-    console.log(formData);
     const result = await response.json();
     console.log(result);
     setBooks((prev) => [...prev, result]);
