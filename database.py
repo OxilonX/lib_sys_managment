@@ -35,24 +35,22 @@ def init_db():
     # Books Table
     cur.execute(
         """
-    CREATE TABLE IF NOT EXISTS books (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        catalog_code TEXT UNIQUE,
-        title TEXT NOT NULL,
-        theme_id INTEGER,
-        publisher_id INTEGER,
-        poster TEXT NOT NULL,
-        FOREIGN KEY (theme_id) REFERENCES Theme(id),
-        FOREIGN KEY (publisher_id) REFERENCES Publisher(id)
-    );
-    """
+        CREATE TABLE IF NOT EXISTS books (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            catalog_code TEXT UNIQUE,
+            title TEXT NOT NULL,
+            location TEXT NOT NULL, 
+            theme_id INTEGER,
+            poster TEXT NOT NULL,
+            FOREIGN KEY (theme_id) REFERENCES themes(id)
+        );
+        """
     )
     # Authors Table
     cur.execute(
         """CREATE TABLE IF NOT EXISTS authors (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        firstname TEXT,
-        lastname TEXT NOT NULL
+        name TEXT NOT NULL UNIQUE
     );
     """
     )
@@ -123,6 +121,55 @@ def init_db():
     )
     conn.commit()
     conn.close()
+
+
+# Util functions to manipulate the database
+
+
+def get_or_create_id(table_name, name_value, name_column="name"):
+    db = get_db()
+    cursor = db.cursor()
+
+    query = f"SELECT id FROM {table_name} WHERE {name_column} = ?"
+    cursor.execute(query, (name_value,))
+
+    result = cursor.fetchone()
+    if result:
+        return result[0]
+
+    insert_query = f"INSERT INTO {table_name} ({name_column}) VALUES (?)"
+    cursor.execute(insert_query, (name_value,))
+    db.commit()
+
+    return cursor.lastrowid
+
+
+def insert_book_authors(book_id, author_names):
+    db = get_db()
+    cursor = db.cursor()
+
+    for author_name in author_names:
+        author_id = get_or_create_id("authors", author_name, "lastname")
+
+        cursor.execute(
+            """INSERT INTO book_authors (book_id, author_id) VALUES (?, ?)""",
+            (book_id, author_id),
+        )
+    db.commit()
+
+
+def insert_book_publishers(book_id, publisher_names):
+    db = get_db()
+    cursor = db.cursor()
+
+    for publisher_name in publisher_names:
+        publisher_id = get_or_create_id("publishers", publisher_name, "name")
+
+        cursor.execute(
+            """INSERT INTO book_publishers (book_id, publisher_id) VALUES (?, ?)""",
+            (book_id, publisher_id),
+        )
+    db.commit()
 
 
 # Delete users with empty age row

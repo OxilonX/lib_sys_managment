@@ -1,7 +1,13 @@
-from flask import Flask, request, jsonify, g
+import sqlite3
+from flask import Flask, request, jsonify, g, json
 from flask_cors import CORS
-from database import get_db, init_db
-
+from database import (
+    get_db,
+    init_db,
+    get_or_create_id,
+    insert_book_authors,
+    insert_book_publishers,
+)
 
 app = Flask(__name__)
 CORS(app)
@@ -15,6 +21,95 @@ def close_db(exception):
     db = g.pop("db", None)
     if db is not None:
         db.close()
+
+
+@app.route("/api/books", methods=["POST", "GET"])
+def add_new_book():
+    db = get_db()
+    cursor = db.cursor()
+
+    # 1. DATA EXTRACTION AND INITIAL PARSING
+    try:
+        title = request.form.get("title")
+        cat_code = request.form.get("catCode")
+        location = request.form.get("location")
+        theme_name = request.form.get("theme")
+
+        # Parse JSON arrays sent via FormData
+        authors = request.form.get("authors")
+        publishers = request.form.get("publishers")
+        # authors = json.loads(request.form.get("authors", "[]"))
+        # publishers = json.loads(request.form.get("publishers", "[]"))
+
+    except Exception as e:
+        # Catch errors if request.form or json.loads fails unexpectedly
+        return (
+            jsonify({"error": "Invalid data format received", "details": str(e)}),
+            400,
+        )
+
+    # 2. VALIDATION
+    if not all(
+        [
+            title,
+            cat_code,
+            location,
+            theme_name,
+            authors,
+            publishers,
+        ]
+    ):
+        return (
+            jsonify(
+                {
+                    "error": "Missing required book fields (title, code, theme, authors, publishers, poster)."
+                }
+            ),
+            400,
+        )
+
+    # 3. TRANSACTION START
+    try:
+        # Process Relationships (Themes)
+        theme_id = get_or_create_id("themes", theme_name, "name")
+
+        # Insert Main Book Record
+        cursor.execute(
+            """
+            INSERT INTO books (catalog_code, title,location, theme_id, )
+            VALUES (?, ?, ?, ?, )
+            """,
+            (
+                cat_code,
+                title,
+                location,
+                theme_id,
+            ),
+        )
+        book_id = cursor.lastrowid
+
+        # Handle Jointure Tables (This commits inside the helper functions)
+        insert_book_authors(book_id, authors)
+        insert_book_publishers(book_id, publishers)
+
+        return jsonify({"message": "Book added successfully", "book_id": book_id}), 201
+
+    except sqlite3.IntegrityError as e:
+        db.rollback()
+        # Catches duplicate catalog_code, etc.
+        return jsonify({"error": "Database constraint failed.", "details": str(e)}), 409
+
+    except Exception as e:
+        db.rollback()
+        return (
+            jsonify(
+                {
+                    "error": "An unexpected critical server error occurred.",
+                    "details": str(e),
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/api/users", methods=["GET"])

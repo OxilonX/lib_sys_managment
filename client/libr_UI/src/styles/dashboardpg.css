@@ -1,92 +1,25 @@
-
+.dashboard-section-grid{
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 40px;
+  padding: 40px 0;
+}
 .dashboard-page {
   padding-bottom: 50px; 
 }
-
 .form-heading {
-  padding: 50px 0 24px;
+  padding: 0 0 24px;
   margin: 0;
   font-size: 2em;
   color: #333;
 }
-
-.book-form {
-  width: 100%;
-}
-
 .form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap:  15px;
 }
-.form-items-container{
-  display: flex;
-  gap: 10px;
-}
-.form-item {
-  width: 100%;
-  padding: 5px 0;
-}
-
-
-
-.code-generate-button .p-button {
-  padding: 15px 40px; 
-  font-weight: 500;
-}
-
-.chips-label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 14px;
-  color: #6c757d; 
-}
-
-
-
-.submit-item .p-button {
-    padding: 20px 60px;
-    font-weight: 500;
-}
-
-.p-chips .p-chips-token {
-  color: #FFFFFF;
-  font-weight: 600;
-  font-size: 0.8rem;
-  padding: 8px 12px;
-  border-radius: 4px;
-}
-
-.p-chips .p-chips-token .p-chips-token-icon {
-  color: var(--primary-contrast-text);
-}
-
-.p-chips .p-chips-token .p-chips-token-icon:hover {
-  color: #FFFFFF;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.p-chips .p-inputtext {
-  border-color: var(--primary-color);
-  box-shadow: none;
-}
-
-.p-chips.author-chips .p-chips-token {
-  background: var(--info-color);
-  color: #FFFFFF;
-}
-
-.p-chips.author-chips .p-chips-token .p-chips-token-icon {
-  color: var(--primary-color);
-}
-
-.p-chips.publisher-chips .p-chips-token {
-  background: var(--primary-color);
-  color: var(--text-color);
-}
-
-.p-chips.publisher-chips .p-chips-token .p-chips-token-icon {
-  color: var(--text-muted-color);
+.inp-catgenerator{
+  display: grid; 
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
 }
