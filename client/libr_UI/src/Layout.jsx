@@ -33,6 +33,16 @@ export default function Layout() {
           },
         ]
       : []),
+    ...(currUser.user.role === "admin" || currUser.user.role === "user" || true
+      ? [
+          {
+            label: "Users List",
+            icon: "pi pi-user",
+            className: "menu-item",
+            command: () => navigate("/explore/userslist"),
+          },
+        ]
+      : []),
     {
       label: "Trending",
       icon: "pi pi-star",

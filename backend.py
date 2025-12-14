@@ -1,4 +1,5 @@
 import sqlite3
+import logging
 from flask import Flask, request, jsonify, g, json
 from flask_cors import CORS
 from database import (
@@ -7,10 +8,12 @@ from database import (
     get_or_create_id,
     insert_book_authors,
     insert_book_publishers,
+    insert_book_keywords,
 )
 
 app = Flask(__name__)
 CORS(app)
+logging.basicConfig(level=logging.DEBUG)  # for full errors logging in terminal
 
 with app.app_context():
     init_db()
@@ -23,28 +26,29 @@ def close_db(exception):
         db.close()
 
 
-@app.route("/api/books", methods=["POST", "GET"])
+@app.route("/api/books", methods=["GET"])
+def get_books():
+    conn = get_db()
+    cur = conn.cursor()
+    rows = cur.execute("SELECT * FROM books").fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/books", methods=["POST"])
 def add_new_book():
     db = get_db()
     cursor = db.cursor()
     data = request.json
     title = data.get("title")
+    poster = data.get("poster")
     shelf = data.get("shelf")
     theme = data.get("theme")
     catCode = data.get("catCode")
     authors = data.get("authors")
     publishers = data.get("publishers")
+    keywords = data.get("keywords")
 
-    if not all(
-        [
-            title,
-            catCode,
-            shelf,
-            theme,
-            authors,
-            publishers,
-        ]
-    ):
+    if not all([title, catCode, shelf, theme, authors, poster, publishers]):
         return (
             jsonify(
                 {
@@ -59,20 +63,16 @@ def add_new_book():
 
         cursor.execute(
             """
-            INSERT INTO books (catalog_code, title,location, theme_id, )
-            VALUES (?, ?, ?, ?, )
+            INSERT INTO books (catalog_code, title,location, theme_id,poster )
+            VALUES (?, ?, ?, ?,? )
             """,
-            (
-                catCode,
-                title,
-                shelf,
-                theme_id,
-            ),
+            (catCode, title, shelf, theme_id, poster),
         )
         book_id = cursor.lastrowid
 
         insert_book_authors(book_id, authors)
         insert_book_publishers(book_id, publishers)
+        insert_book_keywords(book_id, keywords)
 
         return jsonify({"message": "Book added successfully", "book_id": book_id}), 201
 
@@ -81,7 +81,11 @@ def add_new_book():
         return jsonify({"error": "Database constraint failed.", "details": str(e)}), 409
 
     except Exception as e:
+        print(f"Error: {e}")
         db.rollback()
+        import traceback
+
+        traceback.print_exc()
         return (
             jsonify(
                 {

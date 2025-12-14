@@ -5,8 +5,8 @@ const BooksContext = createContext(null);
 export function BooksProvider({ children }) {
   const [books, setBooks] = useState([]);
 
-  async function submitNewBook(bookData) {
-    const response = await fetch("/api/books", {
+  const submitNewBook = async (bookData) => {
+    const response = await fetch(`${API_BASE}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -14,16 +14,15 @@ export function BooksProvider({ children }) {
       body: JSON.stringify(bookData),
     });
     const result = await response.json();
-    console.log(result);
-    setBooks((prev) => [...prev, result]);
     if (!response.ok) {
       const errorMessage =
         result.error || result.message || "Unknown API Error";
       throw new Error(errorMessage);
     }
-
+    console.log(result);
+    setBooks((prev) => [...prev, result]);
     return result;
-  }
+  };
   const bookValue = {
     books,
     setBooks,

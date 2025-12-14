@@ -7,6 +7,7 @@ import Trending from "./pages/TrendingPage";
 import DashboardPage from "./pages/DashboardPage";
 import Mybooks from "./pages/MybooksPage";
 import ProfilePage from "./pages/ProfilePage";
+import UsersPage from "./pages/UsersPage";
 export default function App() {
   return (
     <BrowserRouter>
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="trending" element={<Trending />} />
           <Route path="mybooks" element={<Mybooks />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="userslist" element={<UsersPage />} />
         </Route>
         <Route path="/profile" element={<ProfilePage />} />
       </Routes>

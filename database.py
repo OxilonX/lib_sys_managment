@@ -149,7 +149,7 @@ def insert_book_authors(book_id, author_names):
     cursor = db.cursor()
 
     for author_name in author_names:
-        author_id = get_or_create_id("authors", author_name, "lastname")
+        author_id = get_or_create_id("authors", author_name, "name")
 
         cursor.execute(
             """INSERT INTO book_authors (book_id, author_id) VALUES (?, ?)""",
@@ -168,6 +168,20 @@ def insert_book_publishers(book_id, publisher_names):
         cursor.execute(
             """INSERT INTO book_publishers (book_id, publisher_id) VALUES (?, ?)""",
             (book_id, publisher_id),
+        )
+    db.commit()
+
+
+def insert_book_keywords(book_id, keyword_words):
+    db = get_db()
+    cursor = db.cursor()
+
+    for keyword_word in keyword_words:
+        keyword_id = get_or_create_id("keyword", keyword_word, "word")
+
+        cursor.execute(
+            """INSERT INTO book_keywords (book_id, keyword_id) VALUES (?, ?)""",
+            (book_id, keyword_id),
         )
     db.commit()
 
