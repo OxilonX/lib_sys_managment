@@ -9,7 +9,7 @@ export default function UsersList() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [dialogAction, setDialogAction] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState();
+  const [itemsPerPage] = useState(4);
 
   useEffect(() => {
     fetchUsers();
@@ -21,6 +21,7 @@ export default function UsersList() {
       const response = await fetch("/api/users");
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
+      console.log(data);
       setUsers(data);
       setError(null);
     } catch (err) {
@@ -50,10 +51,13 @@ export default function UsersList() {
       let method = "PUT";
       let body = {};
 
-      if (dialogAction === "subscribe") {
-        body = { is_subscribed: 1 };
-      } else if (dialogAction === "makeAdmin") {
-        body = { role: "admin" };
+      // CHANGED: Toggle subscribe - send 0 if already subscribed, 1 if not
+      if (dialogAction === "toggleSubscribe") {
+        body = { is_subscribed: selectedUser.is_subscribed ? 0 : 1 };
+      }
+      // CHANGED: Toggle admin - send "user" if already admin, "admin" if not
+      else if (dialogAction === "toggleAdmin") {
+        body = { role: selectedUser.role === "admin" ? "user" : "admin" };
       } else if (dialogAction === "delete") {
         method = "DELETE";
       }
@@ -90,7 +94,7 @@ export default function UsersList() {
     );
   }
 
-  // Pagination logic
+  // Users pg Pagination logic
   const totalPages = Math.ceil(users.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -155,33 +159,31 @@ export default function UsersList() {
                 </div>
 
                 <div className="user-actions">
-                  {user.is_subscribed ? (
-                    <span className="badge badge-success">Subscribed</span>
-                  ) : (
-                    <span className="badge badge-default">Not Subscribed</span>
-                  )}
-
                   {user.role === "admin" && (
                     <span className="badge badge-primary">Admin</span>
                   )}
 
-                  {!user.is_subscribed && (
-                    <button
-                      onClick={() => handleOpenDialog(user, "subscribe")}
-                      className="btn btn-success"
-                    >
-                      Subscribe
-                    </button>
-                  )}
+                  {/* CHANGED: Subscribe button now toggles - shows Subscribe or Unsubscribe */}
+                  <button
+                    onClick={() => handleOpenDialog(user, "toggleSubscribe")}
+                    className={
+                      user.is_subscribed ? "btn btn-danger" : "btn btn-success"
+                    }
+                  >
+                    {user.is_subscribed ? "Unsubscribe" : "Subscribe"}
+                  </button>
 
-                  {user.role !== "admin" && (
-                    <button
-                      onClick={() => handleOpenDialog(user, "makeAdmin")}
-                      className="btn btn-primary"
-                    >
-                      Make Admin
-                    </button>
-                  )}
+                  {/* CHANGED: Admin button now toggles - shows Make Admin or Remove Admin */}
+                  <button
+                    onClick={() => handleOpenDialog(user, "toggleAdmin")}
+                    className={
+                      user.role === "admin"
+                        ? "btn btn-warning"
+                        : "btn btn-primary"
+                    }
+                  >
+                    {user.role === "admin" ? "Remove Admin" : "Make Admin"}
+                  </button>
 
                   <button
                     onClick={() => handleOpenDialog(user, "delete")}
@@ -249,19 +251,23 @@ export default function UsersList() {
               <h3>Confirm Action</h3>
             </div>
             <div className="dialog-body">
+              {/* CHANGED: Dialog messages now show toggle context */}
               <p>
-                {dialogAction === "subscribe" &&
-                  `Make ${selectedUser?.fname} a subscriber?`}
-                {dialogAction === "makeAdmin" &&
-                  `Make ${selectedUser?.fname} an admin?`}
+                {dialogAction === "toggleSubscribe" &&
+                  `${
+                    selectedUser?.is_subscribed ? "Unsubscribe" : "Subscribe"
+                  } ${selectedUser?.fname}?`}
+                {dialogAction === "toggleAdmin" &&
+                  `${
+                    selectedUser?.role === "admin"
+                      ? "Remove admin from"
+                      : "Make admin"
+                  } ${selectedUser?.fname}?`}
                 {dialogAction === "delete" &&
                   `Delete ${selectedUser?.fname}? This action cannot be undone.`}
               </p>
             </div>
             <div className="dialog-actions">
-              <button onClick={handleCloseDialog} className="btn btn-secondary">
-                Cancel
-              </button>
               <button
                 onClick={handleConfirmAction}
                 className={
@@ -271,6 +277,9 @@ export default function UsersList() {
                 }
               >
                 Confirm
+              </button>
+              <button onClick={handleCloseDialog} className="btn btn-secondary">
+                Cancel
               </button>
             </div>
           </div>

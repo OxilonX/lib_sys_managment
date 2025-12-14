@@ -105,6 +105,50 @@ def get_users():
     return jsonify([dict(row) for row in rows])
 
 
+@app.route("/api/users/<int:user_id>", methods=["GET", "PUT", "DELETE"])
+def manage_user(user_id):
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == "GET":
+        # Get a single user
+        row = cur.execute(
+            "SELECT * FROM users WHERE user_id = ?", (user_id,)
+        ).fetchone()
+        if not row:
+            return jsonify({"error": f"User {user_id} not found"}), 404
+        return jsonify(dict(row))
+
+    elif request.method == "PUT":
+        # Update a user (subscribe, makeAdmin, etc)
+        data = request.get_json()
+
+        if "is_subscribed" in data:
+            cur.execute(
+                "UPDATE users SET is_subscribed = ? WHERE user_id = ?",
+                (data["is_subscribed"], user_id),
+            )
+
+        if "role" in data:
+            cur.execute(
+                "UPDATE users SET role = ? WHERE user_id = ?", (data["role"], user_id)
+            )
+
+        conn.commit()
+
+        # Return updated user
+        row = cur.execute(
+            "SELECT * FROM users WHERE user_id = ?", (user_id,)
+        ).fetchone()
+        return jsonify(dict(row))
+
+    elif request.method == "DELETE":
+        # Delete a user
+        cur.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+        conn.commit()
+        return jsonify({"message": "User deleted"}), 200
+
+
 @app.route("/api/login", methods=["POST", "GET"])
 def login():
     data = request.get_json(force=True)
