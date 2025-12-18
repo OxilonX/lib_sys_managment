@@ -3,6 +3,8 @@ import { useUsersData } from "../contexts/userDataContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+//Prime React Lib Components
+import { Avatar } from "primereact/avatar";
 export default function ProfilePage() {
   const { currUser } = useUsersData();
   const navigate = useNavigate();
@@ -29,15 +31,17 @@ export default function ProfilePage() {
       <div className="profile-container">
         {/* Header Section */}
         <div className="profile-header">
-          <img
-            src="https://i.pravatar.cc/150?img=1"
+          <Avatar
+            label={currUser?.user.username?.charAt(0).toUpperCase() || "U"}
+            shape="circle"
+            className="profile-avatar p-button-primary"
             alt="Profile"
-            className="profile-avatar"
           />
           <h1 className="profile-name">
             {currUser?.user?.fname} {currUser?.user?.lname}
           </h1>
           <p className="profile-join-date">
+            Joined in :
             {currUser?.user?.join_datetime || "Member since January 15, 2024"}
           </p>
         </div>
@@ -46,9 +50,9 @@ export default function ProfilePage() {
 
         {/* Bio Section */}
         <div className="profile-bio-section">
-          <h3 className="profile-bio-title">Bio</h3>
+          <h3 className="profile-bio-title">Personal Informations</h3>
           <p className="profile-bio-text">
-            Software developer passionate about building great applications
+            Your Password : {currUser?.user?.password}
           </p>
         </div>
 
