@@ -28,7 +28,8 @@ def init_db():
         address TEXT NOT NULL,
         phone TEXT NOT NULL, 
         role TEXT NOT NULL CHECK (role IN ('admin', 'user')) DEFAULT 'user' ,
-        is_subscribed INTEGER DEFAULT 0
+        is_subscribed INTEGER DEFAULT 0,
+        join_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """
     )

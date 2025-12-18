@@ -34,6 +34,7 @@ export default function AuthPage() {
     phone: "",
     role: "user",
     is_subscribed: 0,
+    join_date_time: "",
   });
   function validateSignup(userInfo) {
     if (!userInfo.fname.trim()) return false;
@@ -76,13 +77,14 @@ export default function AuthPage() {
         phone: "",
         role: "user",
         is_subscribed: 0,
+        join_date_time: "",
       });
     }
   }
   async function handleLoginClick() {
     const data = await loginUser(userInfo);
     if (data.success) {
-      console.log(data);
+      setCurrUser(data);
       navigate("/explore");
     } else {
       setCurrUser({ success: data.success, msg: data.msg });
@@ -99,6 +101,7 @@ export default function AuthPage() {
       phone: "",
       role: "user",
       is_subscribed: 0,
+      join_date_time: "",
     });
   }
   return (
