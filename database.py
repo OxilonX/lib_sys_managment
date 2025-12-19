@@ -36,16 +36,38 @@ def init_db():
     # Books Table
     cur.execute(
         """
-        CREATE TABLE IF NOT EXISTS books (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            catalog_code TEXT UNIQUE,
-            title TEXT NOT NULL,
-            location TEXT NOT NULL, 
-            theme_id INTEGER,
-            poster TEXT NOT NULL,
-            FOREIGN KEY (theme_id) REFERENCES themes(id)
-        );
+    CREATE TABLE IF NOT EXISTS books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        catalog_code TEXT UNIQUE,
+        title TEXT NOT NULL,
+        theme_id INTEGER,
+        publisher_id INTEGER NOT NULL,
+        poster TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (theme_id) REFERENCES themes(id),
+        FOREIGN KEY (publisher_id) REFERENCES publishers(id)
+    );
+    """
+    )
+
+    # book copies
+    cur.execute(
         """
+    CREATE TABLE IF NOT EXISTS book_copies (
+        copy_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id INTEGER NOT NULL,
+        location TEXT NOT NULL,
+        publisher_id INTEGER NOT NULL,
+        is_available INTEGER DEFAULT 1,
+        borrowed_by INTEGER,
+        borrowed_date TIMESTAMP,
+        due_date TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+        FOREIGN KEY (publisher_id) REFERENCES publishers(id),
+        FOREIGN KEY (borrowed_by) REFERENCES users(user_id)
+    );
+    """
     )
     # Authors Table
     cur.execute(

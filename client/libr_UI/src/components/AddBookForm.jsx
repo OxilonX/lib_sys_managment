@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -19,11 +20,11 @@ export default function AddBookForm() {
   const [bookInputVal, setBookInputVal] = useState({
     title: "",
     catCode: "",
-    shelf: "",
+    location: "",
     theme: "",
     poster: "",
+    publisher: "",
     authors: [],
-    publishers: [],
     keywords: [],
   });
 
@@ -40,12 +41,11 @@ export default function AddBookForm() {
   //validate all book infos before sending it
   function validateBookInput(bookInfo) {
     if (!bookInfo.title.trim()) return false;
-    if (!bookInfo.shelf.trim()) return false;
+    if (!bookInfo.location.trim()) return false;
     if (!bookInfo.poster) return false;
     if (!bookInfo.theme) return false;
 
     if (!bookInfo.authors || bookInfo.authors.length === 0) return false;
-    if (!bookInfo.publishers || bookInfo.publishers.length === 0) return false;
 
     return true;
   }
@@ -80,20 +80,21 @@ export default function AddBookForm() {
     setBookInputVal({
       title: "",
       catCode: newCode,
-      shelf: "",
+      location: "",
       theme: "",
       poster: "",
       authors: [],
-      publishers: [],
+      publisher: "",
       keywords: [],
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateBookInput(bookInputVal)) {
       alert(
-        "Please fill in all required fields (Title, shelf, theme, Authors, Publishers, Poster)."
+        "Please fill in all required fields (Title, location, theme, Authors, publisher, Poster)."
       );
       return;
     }
@@ -115,14 +116,6 @@ export default function AddBookForm() {
     setBookInputVal((prev) => ({
       ...prev,
       authors: authors,
-    }));
-  };
-
-  // Handle publishers array change
-  const handlePublishersChange = (publishers) => {
-    setBookInputVal((prev) => ({
-      ...prev,
-      publishers: publishers,
     }));
   };
 
@@ -167,13 +160,13 @@ export default function AddBookForm() {
           </Select>
         </FormControl>
 
-        {/* Book Shelf */}
+        {/* Book location */}
         <TextField
           onChange={(e) => handleInputChange(e)}
-          value={bookInputVal.shelf}
-          label="Book Shelf"
+          value={bookInputVal.location}
+          label="Book location"
           variant="outlined"
-          name="shelf"
+          name="location"
         />
 
         {/* Book Poster URL */}
@@ -184,29 +177,36 @@ export default function AddBookForm() {
           variant="outlined"
           name="poster"
         />
+        {/* publisher  Input */}
 
+        <TextField
+          onChange={(e) => handleInputChange(e)}
+          value={bookInputVal.publisher}
+          name="publisher"
+          label="publisher"
+          variant="outlined"
+          fullWidth
+          sx={{ gridColumn: "1 / -1" }}
+        />
         {/* Authors Chip Input */}
-        <ChipInput
-          label="Authors"
-          value={bookInputVal.authors}
-          onChange={handleAuthorsChange}
-        />
-
-        {/* Publishers Chip Input */}
-        <ChipInput
-          label="Publishers"
-          value={bookInputVal.publishers}
-          onChange={handlePublishersChange}
-        />
 
         {/* Keywords Chip Input */}
-        <ChipInput
-          label="Keywords"
-          value={bookInputVal.keywords}
-          onChange={handleKeywordsChange}
-          fullRow
-        />
-
+        <Box sx={{ gridColumn: "1 / -1", display: "flex", gap: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <ChipInput
+              label="Authors"
+              value={bookInputVal.authors}
+              onChange={handleAuthorsChange}
+            />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <ChipInput
+              label="Keywords"
+              value={bookInputVal.keywords}
+              onChange={handleKeywordsChange}
+            />
+          </Box>
+        </Box>
         {/* Cat Code Generator */}
         <div className="inp-catgenerator">
           <TextField
