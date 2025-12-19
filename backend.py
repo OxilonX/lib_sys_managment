@@ -225,6 +225,104 @@ def update_book_copy(copy_id):
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
 
+from datetime import datetime
+
+
+@app.route("/api/books/copies/<int:copy_id>/borrow", methods=["POST"])
+def borrow_book_copy(copy_id):
+    """Borrow a book copy for 15 days"""
+    db = get_db()
+    cursor = db.cursor()
+    data = request.json
+
+    user_id = data.get("user_id")
+    due_date = data.get("due_date")
+
+    # Check if user_id is provided
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    try:
+        # Check if copy exists and is available
+        cursor.execute(
+            "SELECT is_available FROM book_copies WHERE copy_id = ?", (copy_id,)
+        )
+        copy = cursor.fetchone()
+
+        if not copy:
+            return jsonify({"error": "Copy not found"}), 404
+
+        if copy["is_available"] == 0:
+            return jsonify({"error": "Copy is not available"}), 400
+
+        # Update copy - mark as borrowed
+        cursor.execute(
+            """
+            UPDATE book_copies 
+            SET is_available = 0, borrowed_by = ?, borrowed_date = ?, due_date = ?
+            WHERE copy_id = ?
+            """,
+            (user_id, datetime.now().isoformat(), due_date, copy_id),
+        )
+
+        db.commit()
+
+        return (
+            jsonify(
+                {
+                    "message": "Book borrowed successfully",
+                    "copy_id": copy_id,
+                    "due_date": due_date,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
+@app.route("/api/books/copies/<int:copy_id>/return", methods=["POST"])
+def return_book_copy(copy_id):
+    """Return a borrowed book copy"""
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        # Check if copy exists and is borrowed
+        cursor.execute(
+            "SELECT is_available FROM book_copies WHERE copy_id = ?", (copy_id,)
+        )
+        copy = cursor.fetchone()
+
+        if not copy:
+            return jsonify({"error": "Copy not found"}), 404
+
+        if copy["is_available"] == 1:
+            return jsonify({"error": "Copy is not borrowed"}), 400
+
+        # Update copy - mark as available
+        cursor.execute(
+            """
+            UPDATE book_copies 
+            SET is_available = 1, borrowed_by = NULL, borrowed_date = NULL, due_date = NULL
+            WHERE copy_id = ?
+            """,
+            (copy_id,),
+        )
+
+        db.commit()
+
+        return (
+            jsonify({"message": "Book returned successfully", "copy_id": copy_id}),
+            200,
+        )
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
 @app.route("/api/books", methods=["GET"])
 def get_books():
     """Get all books with their publisher info and copy counts"""

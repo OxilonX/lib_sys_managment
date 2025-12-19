@@ -142,6 +142,8 @@ def init_db():
     );
     """
     )
+
+    # cur.execute("DELETE FROM book_copies WHERE book_id = 2")
     conn.commit()
     conn.close()
 
