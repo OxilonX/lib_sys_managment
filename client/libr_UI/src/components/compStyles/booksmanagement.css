@@ -1,0 +1,180 @@
+/* Container & Layout */
+.bm-container {
+}
+
+.bm-loading {
+  display: flex;
+  justify-content: center;
+  padding: 32px;
+}
+
+/* Title */
+.bm-title{
+  font-weight: 700;
+  font-size: 2rem;
+  margin: 0 0 24px;
+  color: #000;
+}
+
+/* Error Alert */
+.bm-error {
+  margin-bottom: 16px;
+}
+
+/* Accordion */
+.bm-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bm-accordion {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.bm-accordion:hover {
+  background-color: #f5f5f5;
+}
+
+.bm-summary-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+    gap: 16px;
+  flex: 1;
+}
+
+.bm-book-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bm-book-title {
+  font-weight: 600;
+  color: #000;
+}
+
+.bm-book-meta {
+  color: #666;
+}
+
+
+
+/* Accordion Details */
+.bm-details {
+  padding: 16px;
+}
+
+.bm-no-copies {
+  color: #999;
+}
+
+/* Table */
+.bm-table-container {
+  background-color: #fff;
+}
+
+.bm-table-header {
+  background-color: #f0f0f0;
+}
+
+.bm-table-cell-header {
+  font-weight: 700;
+  color: #000;
+}
+
+.bm-table-row {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.bm-table-cell {
+  color: #000;
+}
+
+/* Status Badge */
+.bm-status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.bm-available {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.bm-borrowed {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.bm-delete-btn {
+  transition: all 0.2s ease;
+}
+
+.bm-delete-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Pagination */
+.bm-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+/* Dialog */
+.bm-dialog-title {
+  font-weight: 700;
+  color: #000;
+}
+
+.bm-dialog-content {
+  padding-top: 16px;
+}
+
+.bm-input {
+  margin-bottom: 16px;
+}
+
+.bm-dialog-actions {
+  padding: 16px;
+}
+
+.bm-cancel-btn {
+  text-transform: none;
+  color: #666;
+}
+
+.bm-submit-btn {
+  text-transform: none;
+  font-weight: 600;
+}
+.add-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  text-transform: none;
+  user-select: none;
+  margin-right:20px;
+}
+
+.add-icon-button :hover {
+  transform: translateY(-2px);
+}
+
+.add-icon-button :active {
+  transform: translateY(0);
+}
+
+.sadd-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

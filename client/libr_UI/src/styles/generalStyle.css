@@ -12,4 +12,5 @@ body{
 }
 section{
     background: var(--background-color);
+    margin: 32px 0 ;
 }

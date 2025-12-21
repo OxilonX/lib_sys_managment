@@ -1,4 +1,9 @@
 import { useState, useEffect } from "react";
+import { Button, Box, Stack } from "@mui/material";
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from "@mui/icons-material";
 import "./compStyles/userlist.css";
 
 export default function UsersList() {
@@ -51,12 +56,9 @@ export default function UsersList() {
       let method = "PUT";
       let body = {};
 
-      // CHANGED: Toggle subscribe - send 0 if already subscribed, 1 if not
       if (dialogAction === "toggleSubscribe") {
         body = { is_subscribed: selectedUser.is_subscribed ? 0 : 1 };
-      }
-      // CHANGED: Toggle admin - send "user" if already admin, "admin" if not
-      else if (dialogAction === "toggleAdmin") {
+      } else if (dialogAction === "toggleAdmin") {
         body = { role: selectedUser.role === "admin" ? "user" : "admin" };
       } else if (dialogAction === "delete") {
         method = "DELETE";
@@ -94,7 +96,6 @@ export default function UsersList() {
     );
   }
 
-  // Users pg Pagination logic
   const totalPages = Math.ceil(users.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -153,7 +154,7 @@ export default function UsersList() {
                       {user.fname} {user.lname}
                     </p>
                     <p className="user-email">
-                      {user.email} • {user.username}
+                      {user.email} - {user.username}
                     </p>
                   </div>
                 </div>
@@ -163,7 +164,6 @@ export default function UsersList() {
                     <span className="badge badge-primary">Admin</span>
                   )}
 
-                  {/* CHANGED: Subscribe button now toggles - shows Subscribe or Unsubscribe */}
                   <button
                     onClick={() => handleOpenDialog(user, "toggleSubscribe")}
                     className={
@@ -173,7 +173,6 @@ export default function UsersList() {
                     {user.is_subscribed ? "Unsubscribe" : "Subscribe"}
                   </button>
 
-                  {/* CHANGED: Admin button now toggles - shows Make Admin or Remove Admin */}
                   <button
                     onClick={() => handleOpenDialog(user, "toggleAdmin")}
                     className={
@@ -198,51 +197,57 @@ export default function UsersList() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination with MUI */}
       {users.length > 0 && (
         <div className="pagination-container">
-          <button
-            className="pagination-btn pagination-prev"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            ← Previous
-          </button>
+          <div className="pagination-stack">
+            <Button
+              variant="outlined"
+              startIcon={<ChevronLeftIcon />}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="pagination-btn pagination-prev"
+            >
+              Previous
+            </Button>
 
-          <div className="pagination-numbers">
-            {getPaginationNumbers().map((page, idx) =>
-              page === "..." ? (
-                <span key={`dots-${idx}`} className="pagination-dots">
-                  {page}
-                </span>
-              ) : (
-                <button
-                  key={page}
-                  className={`pagination-number ${
-                    currentPage === page ? "active" : ""
-                  }`}
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </button>
-              )
-            )}
+            <div className="pagination-numbers">
+              {getPaginationNumbers().map((page, idx) =>
+                page === "..." ? (
+                  <span key={`dots-${idx}`} className="pagination-dots">
+                    {page}
+                  </span>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "contained" : "outlined"}
+                    onClick={() => handlePageChange(page)}
+                    className={`pagination-number ${
+                      currentPage === page ? "active" : ""
+                    }`}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+            </div>
+
+            <Button
+              variant="outlined"
+              endIcon={<ChevronRightIcon />}
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="pagination-btn pagination-next"
+            >
+              Next
+            </Button>
           </div>
-
-          <button
-            className="pagination-btn pagination-next"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Next →
-          </button>
 
           <div className="pagination-info">
             Page {currentPage} of {totalPages} ({users.length} total)
           </div>
         </div>
       )}
-
       {/* Confirmation Dialog */}
       {openDialog && (
         <div className="dialog-overlay">
@@ -251,7 +256,6 @@ export default function UsersList() {
               <h3>Confirm Action</h3>
             </div>
             <div className="dialog-body">
-              {/* CHANGED: Dialog messages now show toggle context */}
               <p>
                 {dialogAction === "toggleSubscribe" &&
                   `${

@@ -1,10 +1,12 @@
 
 .books-container {
   width: 100%;
-  margin: 30px auto;
+  margin: 0 auto 30px;
 }
 
-
+.explore-heading{
+  margin: 0 0 24px;
+}
 .books-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

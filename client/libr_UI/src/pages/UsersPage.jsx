@@ -1,8 +1,11 @@
 import UsersList from "../components/UsersList";
+import { Container } from "@mui/material";
 export default function UsersPage() {
   return (
     <section id="users-list-page">
-      <UsersList />
+      <Container maxWidth="lg">
+        <UsersList />
+      </Container>
     </section>
   );
 }

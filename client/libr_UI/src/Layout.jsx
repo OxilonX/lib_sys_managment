@@ -43,13 +43,7 @@ export default function Layout() {
           },
         ]
       : []),
-    {
-      label: "Trending",
-      icon: "pi pi-star",
-      className: "menu-item",
 
-      command: () => navigate("/explore/trending"),
-    },
     {
       label: "My books",
       icon: "pi pi-book",

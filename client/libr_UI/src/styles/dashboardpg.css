@@ -2,17 +2,18 @@
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 40px;
-  padding: 40px 0;
 }
 .dashboard-page {
   padding-bottom: 50px; 
 }
-.form-heading {
-  padding: 0 0 24px;
-  margin: 0;
-  font-size: 2em;
-  color: #333;
+
+.form-heading{
+  font-weight: 700;
+  font-size: 2rem;
+   margin: 0 0 24px;
+  color: #000;
 }
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2,1fr);
