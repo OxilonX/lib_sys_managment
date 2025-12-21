@@ -2,7 +2,8 @@ import "../styles/profilepg.css";
 import { useUsersData } from "../contexts/userDataContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+//MUI lib comps
+import Chip from "@mui/material/Chip";
 //Prime React Lib Components
 import { Avatar } from "primereact/avatar";
 export default function ProfilePage() {
@@ -44,6 +45,16 @@ export default function ProfilePage() {
             Joined in :
             {currUser?.user?.join_datetime || "Member since January 15, 2024"}
           </p>
+          <Chip
+            variant="contained"
+            label="subscribed"
+            color="success"
+            sx={{
+              padding: "15px 10px",
+              fontSize: "0.9rem",
+              textTransform: "capitalize",
+            }}
+          />
         </div>
 
         <div className="profile-divider"></div>

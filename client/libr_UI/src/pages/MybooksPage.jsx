@@ -76,7 +76,7 @@ export default function MyBooks() {
     setOpenDialog(false);
     setSelectedBook(null);
   };
-
+  const handleReturnBook = async () => {};
   if (loading) {
     return (
       <Box className="mb-loading">
@@ -225,7 +225,12 @@ export default function MyBooks() {
                     className="mb-status-chip"
                   />
                 </Box>
-                <Button variant="contained">Return</Button>
+                <Button
+                  variant="contained"
+                  onClick={() => handleReturnBook(selectedBook.id)}
+                >
+                  Return Book
+                </Button>
               </Stack>
             )}
           </DialogContent>

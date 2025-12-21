@@ -187,8 +187,7 @@ export default function BooksManagement() {
                     {book.title}
                   </Typography>
                   <Typography variant="caption" className="bm-book-meta">
-                    {book.catalog_code} • {book.available_copies}/
-                    {book.total_copies} copies
+                    {book.catalog_code}
                   </Typography>
                 </Box>
                 <div>
@@ -297,12 +296,37 @@ export default function BooksManagement() {
         maxWidth="sm"
         fullWidth
         className="bm-dialog"
+        // Styling the Dialog and Backdrop
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
+              backdropFilter: "blur(4px)",
+            },
+          },
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: "12px",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+            padding: "8px",
+          },
+        }}
       >
-        <DialogTitle className="bm-dialog-title">
-          Add Copy - {selectedBook?.title}
+        <DialogTitle
+          sx={{
+            fontSize: "1.25rem",
+            fontWeight: 700,
+            color: "#1a1a1a",
+            borderBottom: "1px solid #eee",
+            pb: 2,
+          }}
+        >
+          Add a Copy of {selectedBook?.title}
         </DialogTitle>
-        <DialogContent className="bm-dialog-content">
-          <Stack spacing={2}>
+
+        <DialogContent sx={{ py: 3 }}>
+          <Stack spacing={3} sx={{ mt: 3 }}>
             <TextField
               label="Location"
               fullWidth
@@ -312,7 +336,13 @@ export default function BooksManagement() {
               }
               placeholder="e.g., Aisle A, Shelf 1"
               required
-              className="bm-input"
+              variant="outlined"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  "&:hover": { backgroundColor: "#fcfcfc" },
+                },
+              }}
             />
             <TextField
               label="Publisher"
@@ -322,19 +352,64 @@ export default function BooksManagement() {
                 setNewCopy({ ...newCopy, publisher: e.target.value })
               }
               placeholder="Leave empty for default publisher"
-              className="bm-input"
+              variant="outlined"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  "&:hover": { backgroundColor: "#fcfcfc" },
+                },
+              }}
             />
           </Stack>
         </DialogContent>
-        <DialogActions className="bm-dialog-actions">
-          <Button onClick={handleCloseDialog} className="bm-cancel-btn">
+
+        <DialogActions
+          sx={{
+            padding: "16px 24px",
+            borderTop: "1px solid #eee",
+            gap: 1,
+            // Responsive layout: Stack buttons on mobile
+            flexDirection: { xs: "column-reverse", sm: "row" },
+            "& > button": {
+              width: { xs: "100%", sm: "auto" },
+              ml: { xs: 0, sm: 1 },
+            },
+          }}
+        >
+          <Button
+            onClick={handleCloseDialog}
+            sx={{
+              padding: "10px 20px",
+              fontSize: "0.9rem",
+              textTransform: "capitalize",
+              fontWeight: 600,
+              color: "#666",
+              "&:hover": { backgroundColor: "#f5f5f5" },
+            }}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleAddCopy}
             variant="contained"
             disabled={loading}
-            className="bm-submit-btn"
+            sx={{
+              padding: "10px 20px",
+              fontSize: "0.9rem",
+              textTransform: "capitalize",
+              fontWeight: 600,
+              backgroundColor: "#3f51b5",
+              borderRadius: "6px",
+              boxShadow: "none",
+              "&:hover": {
+                backgroundColor: "#303aa8",
+                boxShadow: "0 4px 12px rgba(63, 81, 181, 0.3)",
+              },
+              "&:disabled": {
+                backgroundColor: "#ccc",
+                color: "#fff",
+              },
+            }}
           >
             {loading ? "Adding..." : "Add Copy"}
           </Button>
