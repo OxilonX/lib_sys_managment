@@ -63,6 +63,10 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
       setError("Please select a copy");
       return;
     }
+    if (!currUser?.user?.is_subscribed) {
+      setError("You need to be a Subscriber to borrow books ");
+      return;
+    }
 
     try {
       setLoading(true);

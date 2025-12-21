@@ -30,7 +30,7 @@ export default function Layout() {
       className: "menu-item",
       command: () => navigate("/explore"),
     },
-    ...(currUser.user.role === "admin" || currUser.user.role === "user" || true
+    ...(currUser.user.role === "admin"
       ? [
           {
             label: "Dashboard",
@@ -40,7 +40,7 @@ export default function Layout() {
           },
         ]
       : []),
-    ...(currUser.user.role === "admin" || currUser.user.role === "user" || true
+    ...(currUser.user.role === "admin"
       ? [
           {
             label: "Users List",
@@ -50,13 +50,16 @@ export default function Layout() {
           },
         ]
       : []),
-
-    {
-      label: "My books",
-      icon: "pi pi-book",
-      className: "menu-item",
-      command: () => navigate("/explore/mybooks"),
-    },
+    ...(currUser.user.role === "user"
+      ? [
+          {
+            label: "My books",
+            icon: "pi pi-book",
+            className: "menu-item",
+            command: () => navigate("/explore/mybooks"),
+          },
+        ]
+      : []),
   ]);
 
   const start = (
