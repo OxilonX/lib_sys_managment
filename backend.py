@@ -2,7 +2,6 @@ import sqlite3
 import logging
 from flask import Flask, request, jsonify, g, json
 from flask_cors import CORS
-from datetime import datetime
 from database import (
     get_db,
     init_db,
@@ -13,7 +12,7 @@ from database import (
 
 app = Flask(__name__)
 CORS(app)
-logging.basicConfig(level=logging.DEBUG)  # for full errors logging in terminal
+logging.basicConfig(level=logging.DEBUG)
 
 with app.app_context():
     init_db()
@@ -184,38 +183,79 @@ def delete_book_copy(copy_id):
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
 
-@app.route("/api/users/<int:user_id>/borrowed-books", methods=["GET"])
+@app.route("/api/users/<int:user_id>/borrowed", methods=["GET"])
 def get_user_borrowed_books(user_id):
-    """Get all books borrowed by a user"""
+    """Get all books currently held by a specific user with full details"""
     db = get_db()
     cursor = db.cursor()
 
     cursor.execute(
         """
         SELECT 
-            b.id,
-            b.catalog_code,
-            b.title,
+            bc.copy_id, 
+            b.title, 
             b.poster,
-            t.name as theme,
-            p.name as publisher,
-            bc.copy_id,
             bc.location,
-            bc.borrowed_date,
-            bc.due_date,
-            bc.is_available
+            p.name as publisher,
+            t.name as theme,
+            bc.borrowed_date, 
+            bc.due_date
         FROM book_copies bc
         JOIN books b ON bc.book_id = b.id
+        LEFT JOIN publishers p ON bc.publisher_id = p.id
         LEFT JOIN themes t ON b.theme_id = t.id
-        LEFT JOIN publishers p ON b.publisher_id = p.id
-        WHERE bc.borrowed_by = ?
-        ORDER BY bc.borrowed_date DESC
-        """,
+        WHERE bc.borrowed_by = ? AND bc.is_available = 0
+    """,
         (user_id,),
     )
 
     borrowed_books = [dict(row) for row in cursor.fetchall()]
     return jsonify(borrowed_books), 200
+
+
+@app.route("/api/books/copies/<int:copy_id>", methods=["PUT"])
+def update_book_copy(copy_id):
+    """Update copy location and/or publisher"""
+    db = get_db()
+    cursor = db.cursor()
+    data = request.json
+
+    try:
+        if "location" in data:
+            cursor.execute(
+                "UPDATE book_copies SET location = ? WHERE copy_id = ?",
+                (data["location"], copy_id),
+            )
+
+        if "publisher" in data:
+            publisher_id = get_or_create_id("publishers", data["publisher"], "name")
+            cursor.execute(
+                "UPDATE book_copies SET publisher_id = ? WHERE copy_id = ?",
+                (publisher_id, copy_id),
+            )
+
+        db.commit()
+
+        # Return updated copy
+        cursor.execute(
+            """
+            SELECT bc.copy_id, bc.book_id, bc.location, p.name as publisher, bc.is_available
+            FROM book_copies bc
+            JOIN publishers p ON bc.publisher_id = p.id
+            WHERE bc.copy_id = ?
+            """,
+            (copy_id,),
+        )
+
+        updated_copy = dict(cursor.fetchone())
+        return jsonify(updated_copy), 200
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
+from datetime import datetime
 
 
 @app.route("/api/books/copies/<int:copy_id>/borrow", methods=["POST"])
@@ -279,7 +319,6 @@ def return_book_copy(copy_id):
     cursor = db.cursor()
 
     try:
-        # Check if copy exists and is borrowed
         cursor.execute(
             "SELECT is_available FROM book_copies WHERE copy_id = ?", (copy_id,)
         )

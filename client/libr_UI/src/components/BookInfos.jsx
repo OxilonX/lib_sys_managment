@@ -32,31 +32,29 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
   const [error, setError] = useState(null);
   const [borrowSuccess, setBorrowSuccess] = useState(false);
   if (!book) return null;
-  console.log(currUser, book.id);
 
   // Fetch copies when component mounts or book changes
-  useEffect(() => {
-    const fetchCopies = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch(`/api/books/${book.id}/copies`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch copies");
-        }
-        const data = await response.json();
-        setCopies(data);
-        const availableCopy = data.find((copy) => copy.is_available === 1);
-        if (availableCopy) {
-          setSelectedCopy(availableCopy.copy_id);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+  const fetchCopies = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`/api/books/${book.id}/copies`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch copies");
       }
-    };
-
+      const data = await response.json();
+      setCopies(data);
+      const availableCopy = data.find((copy) => copy.is_available === 1);
+      if (availableCopy) {
+        setSelectedCopy(availableCopy.copy_id);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchCopies();
   }, [book.id]);
 
@@ -91,9 +89,10 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
       setBorrowSuccess(true);
       setTimeout(() => {
         setCloseDialog(false);
-      }, 1500);
+      }, 1000);
     } catch (err) {
       setError(err.message);
+      console.log(selectedCopy);
     } finally {
       setLoading(false);
     }
@@ -140,14 +139,6 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
             gap: 2,
           }}
         >
-          {borrowSuccess && (
-            <Alert severity="success">
-              Book borrowed successfully! Due date: 15 days from now
-            </Alert>
-          )}
-
-          {error && <Alert severity="error">{error}</Alert>}
-
           {/* Book Image */}
           <Box
             component="img"
@@ -283,22 +274,26 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
                       {/* Selected Checkmark */}
                       {selectedCopy === copy.copy_id && (
                         <Box
-                          sx={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            width: 40,
-                            height: 40,
-                            borderRadius: "50%",
-                            backgroundColor: "#1976d2",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "white",
-                            fontSize: "1.5rem",
-                            fontWeight: "bold",
-                          }}
+                          sx={
+                            copy.is_available === 1
+                              ? {
+                                  position: "absolute",
+                                  top: "50%",
+                                  left: "50%",
+                                  transform: "translate(-50%, -50%)",
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: "50%",
+                                  backgroundColor: "#1976d2",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "white",
+                                  fontSize: "1.5rem",
+                                  fontWeight: "bold",
+                                }
+                              : { display: "none" }
+                          }
                         >
                           ✓
                         </Box>
@@ -353,7 +348,13 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
               </Box>
             )}
           </Paper>
+          {borrowSuccess && (
+            <Alert severity="success">
+              Book borrowed successfully! Due date: 15 days from now
+            </Alert>
+          )}
 
+          {error && <Alert severity="error">{error}</Alert>}
           {/* Action Buttons */}
           <Stack direction="row" spacing={1.5} sx={{ mt: 2 }}>
             <Button

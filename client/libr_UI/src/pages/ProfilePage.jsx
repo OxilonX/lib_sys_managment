@@ -47,12 +47,16 @@ export default function ProfilePage() {
           </p>
           <Chip
             variant="contained"
-            label="subscribed"
-            color="success"
+            label={
+              currUser?.user?.is_subscribed ? "subscribed" : "not subscribed"
+            }
+            color={currUser?.user?.is_subscribed ? "success" : "error"}
             sx={{
-              padding: "15px 10px",
+              padding: "20px 10px",
               fontSize: "0.9rem",
+              fontWeight: "700",
               textTransform: "capitalize",
+              borderRadius: "200px",
             }}
           />
         </div>

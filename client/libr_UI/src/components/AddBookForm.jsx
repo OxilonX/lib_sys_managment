@@ -13,7 +13,7 @@ import { useBooksData } from "../contexts/booksDataContext";
 import ChipInput from "./ChipInput";
 //style import
 import "../styles/dashboardpg.css";
-export default function AddBookForm() {
+export default function AddBookForm({ loadBooks }) {
   const { submitNewBook, setBooks } = useBooksData();
 
   // Single State Hook for All Inputs
@@ -104,6 +104,7 @@ export default function AddBookForm() {
       setUsedCodes((prev) => new Set(prev).add(bookInputVal.catCode));
       setBooks((prev) => [...prev, result]);
       resetForm();
+      loadBooks();
       alert(`Book "${bookInputVal.title}" added successfully!`);
     } catch (error) {
       console.error("add book request Submission Error:", error);

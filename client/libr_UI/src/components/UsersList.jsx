@@ -5,8 +5,10 @@ import {
   ChevronRight as ChevronRightIcon,
 } from "@mui/icons-material";
 import "./compStyles/userlist.css";
+import { useUsersData } from "../contexts/userDataContext";
 
 export default function UsersList() {
+  const { setCurrUser, currUser } = useUsersData();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,7 +28,6 @@ export default function UsersList() {
       const response = await fetch("/api/users");
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
-      console.log(data);
       setUsers(data);
       setError(null);
     } catch (err) {
@@ -75,11 +76,21 @@ export default function UsersList() {
       if (dialogAction === "delete") {
         setUsers(users.filter((u) => u.user_id !== selectedUser.user_id));
       } else {
+        const updatedUserFields = { ...body };
         setUsers(
           users.map((u) =>
             u.user_id === selectedUser.user_id ? { ...u, ...body } : u
           )
         );
+        if (currUser?.user?.user_id === selectedUser.user_id) {
+          setCurrUser((prev) => ({
+            ...prev,
+            user: {
+              ...prev.user,
+              ...updatedUserFields,
+            },
+          }));
+        }
       }
     } catch (err) {
       setError(err.message);

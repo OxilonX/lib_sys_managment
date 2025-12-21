@@ -2,10 +2,12 @@
 import "./styles/layout.css";
 //React hooks imports
 import { useState } from "react";
-//userContext imports
+//userContext import
 import { useUsersData } from "./contexts/userDataContext";
+//bookContext import
+import { useBooksData } from "./contexts/booksDataContext";
 //react router imports
-import { useNavigate, Outlet } from "react-router-dom";
+import { useNavigate, Outlet, useLocation } from "react-router-dom";
 //PrimeReact Imports
 import { Menubar } from "primereact/menubar";
 import { InputText } from "primereact/inputtext";
@@ -15,7 +17,12 @@ import { Avatar } from "primereact/avatar";
 import logo from "./assets/icons/librix-logo.png";
 export default function Layout() {
   const { currUser } = useUsersData();
+  const { searchQuery, setSearchQuery } = useBooksData();
+  const location = useLocation();
   const navigate = useNavigate();
+  const isExplorePage =
+    location.pathname === "/explore" ||
+    location.pathname === "/explore/mybooks";
   const [items, _] = useState([
     {
       label: "Explore",
@@ -63,11 +70,16 @@ export default function Layout() {
   );
   const end = (
     <div className="flex align-items-center gap-2">
-      <InputText
-        placeholder="Search"
-        type="text"
-        className="w-8rem sm:w-auto"
-      />
+      {isExplorePage && (
+        <InputText
+          placeholder="Search"
+          value={searchQuery}
+          placeholder="Search books, authors..."
+          onChange={(e) => setSearchQuery(e.target.value)}
+          type="text"
+          className="w-8rem sm:w-auto"
+        />
+      )}
       <Avatar
         label={currUser?.user.username?.charAt(0).toUpperCase() || "U"}
         shape="circle"

@@ -4,8 +4,8 @@ const BooksContext = createContext(null);
 
 export function BooksProvider({ children }) {
   const [books, setBooks] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  
   const submitNewBook = async (bookData) => {
     const response = await fetch(`${API_BASE}`, {
       method: "POST",
@@ -28,6 +28,8 @@ export function BooksProvider({ children }) {
     books,
     setBooks,
     submitNewBook,
+    searchQuery,
+    setSearchQuery,
   };
   return (
     <BooksContext.Provider value={bookValue}>{children}</BooksContext.Provider>

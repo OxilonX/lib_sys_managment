@@ -31,7 +31,7 @@ export default function MyBooks() {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/users/${currUser.user.user_id}/borrowed-books`
+          `/api/users/${currUser.user.user_id}/borrowed`
         );
         if (!response.ok) throw new Error("Failed to fetch borrowed books");
 
@@ -76,7 +76,34 @@ export default function MyBooks() {
     setOpenDialog(false);
     setSelectedBook(null);
   };
-  const handleReturnBook = async () => {};
+  const handleReturnBook = async (copyId) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/books/copies/${copyId}/return`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to return book");
+      }
+
+      setBorrowedBooks((prev) =>
+        prev.filter((book) => book.copy_id !== copyId)
+      );
+
+      handleCloseDialog();
+    } catch (err) {
+      console.error("Return error:", err);
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   if (loading) {
     return (
       <Box className="mb-loading">
@@ -88,8 +115,6 @@ export default function MyBooks() {
   return (
     <section id="mybooks-page">
       <Container maxWidth="lg" className="mb-container">
-        <h1 className="mb-title">My Borrowed Books</h1>
-
         {error && (
           <Alert severity="error" className="mb-error">
             {error}
@@ -119,9 +144,11 @@ export default function MyBooks() {
                     />
                   </Box>
                   <Box className="mb-book-info">
-                    <Typography className="mb-book-title">
-                      {book.title}
-                    </Typography>
+                    <h1 className="mb-book-title">{book.title}</h1>
+                    <Stack direction={"row"} gap={2}>
+                      <h2 className="mb-dialog-location">{book.publisher}</h2>
+                      <h2 className="mb-dialog-location">{book.location}</h2>
+                    </Stack>
                     <Chip
                       label={dueStatus.text}
                       color={dueStatus.color}
@@ -227,7 +254,7 @@ export default function MyBooks() {
                 </Box>
                 <Button
                   variant="contained"
-                  onClick={() => handleReturnBook(selectedBook.id)}
+                  onClick={() => handleReturnBook(selectedBook.copy_id)}
                 >
                   Return Book
                 </Button>
