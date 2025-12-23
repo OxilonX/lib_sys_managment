@@ -42,7 +42,7 @@
 }
 
 .layout-logo {
-  height: 45px;
+  height: 100px;
   cursor: pointer;
   transition: transform 0.2s ease;
 }

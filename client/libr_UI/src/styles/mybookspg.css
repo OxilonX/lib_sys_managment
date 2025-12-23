@@ -1,182 +1,88 @@
-/* Container */
-.mb-container {
-  padding: 0 0 24px 0;
+.mybooks-page {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
-.mb-loading {
-  display: flex;
-  justify-content: center;
-  padding: 40px;
-}
-
-/* Title */
-.mb-title {
-  font-weight: 700;
-  font-size: 2rem;
-  
-  margin-bottom: 24px;
-  color: #000;
-  margin-top: 0;
-}
-.mb-dialog-location{
-  font-size: 0.75rem;
-  opacity: 0.65;
-  font-weight: 500;
-  margin:0;
-  padding: 0;
-}
-/* Alerts */
-.mb-error {
-  margin-bottom: 24px;
-}
-
-.mb-no-books {
-  margin-bottom: 24px;
-}
-
-/* Grid */
-.mb-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 600px) {
-  .mb-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-}
-
-@media (min-width: 601px) and (max-width: 960px) {
-  .mb-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 961px) {
-  .mb-grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
-
-/* Book Card */
-.mb-book-card {
-  cursor: pointer;
-  transition: all 0.3s ease;
+.mb-loading-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.mb-book-card {
+  width: 240px;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px !important;
+  border: 1px solid #edf2f7 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  background-color: #fff;
+  overflow: hidden; 
 }
 
 .mb-book-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+  border-color: #5eb3f6 !important;
 }
 
-.mb-poster-wrapper {
-  position: relative;
+.mb-card-media {
+  height: 250px; 
   width: 100%;
-  padding-bottom: 150%;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #f0f0f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  object-fit: cover; 
+  background-color: #f8fafc;
 }
 
-.mb-book-card:hover .mb-poster-wrapper {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.mb-poster {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mb-book-info {
+.mb-card-content {
+  padding: 15px ;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
-.mb-book-title {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #000;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.mb-title-truncate {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  margin: 2px 0 0;
-}
-
-.mb-status-chip {
-  font-weight: 600;
-  font-size: 0.7rem;
-}
-
-/* Dialog */
-.mb-dialog-title {
-  font-weight: 700;
-  color: #000;
-}
-
-.mb-dialog-content {
-  padding: 16px 24px;
-}
-
-.mb-dialog-poster-wrapper {
-  width: 100%;
-  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 8px;
+ 
+  font-weight: 700 !important;
+  color: #434a57;
+margin: 0;
+ margin-bottom: 4px !important;
+  font-size: 0.9rem;
+}
+.mb-location{
+  margin: 0 !important;
+  padding: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #718096;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mb-dialog-poster {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  max-height: 300px;
-}
-
-.mb-dialog-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.mb-dialog-item {
+.mb-empty-state {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem !important;
+  border-radius: 16px !important;
+  background-color: #ffffff !important;
+  text-align: center;
 }
 
-.mb-dialog-label {
-  font-weight: 700;
-  color: #666;
-  font-size: 0.85rem;
-  margin-bottom: 4px;
-}
-
-.mb-dialog-value {
-  color: #000;
-  font-size: 0.95rem;
-}
-
-.mb-chip-theme {
-  font-weight: 600;
-  font-size: 0.75rem;
-}
-
-@media (max-width: 600px) {
-  .mb-dialog-grid {
-    grid-template-columns: 1fr;
-  }
+/* Dialog Styling */
+.MuiDialog-paper {
+  border-radius: 16px !important;
+  padding: 8px;
 }

@@ -37,13 +37,14 @@ export default function DashboardPage() {
   const [tabValue, setTabValue] = useState(0);
   const location = useLocation();
 
+  // Fetch all data
   const fetchBooks = async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/books");
       const data = await response.json();
       setBooks(data);
-    } finally {
+    }  finally {
       setLoading(false);
     }
   };

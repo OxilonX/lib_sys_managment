@@ -12,9 +12,19 @@ import {
   DialogTitle,
   DialogContent,
   Stack,
+  Grid,
+  Card,
+  Paper,
 } from "@mui/material";
+import {
+  History as HistoryIcon,
+  LocationOn as LocationIcon,
+  Business as PublisherIcon,
+  Event as DateIcon,
+} from "@mui/icons-material";
 import { useUsersData } from "../contexts/userDataContext";
 import "../styles/mybookspg.css";
+
 export default function MyBooks() {
   const { currUser } = useUsersData();
   const [borrowedBooks, setBorrowedBooks] = useState([]);
@@ -26,7 +36,6 @@ export default function MyBooks() {
   useEffect(() => {
     const fetchBorrowedBooks = async () => {
       if (!currUser?.user?.user_id) return;
-
       try {
         setLoading(true);
         setError(null);
@@ -34,7 +43,6 @@ export default function MyBooks() {
           `/api/users/${currUser.user.user_id}/borrowed`
         );
         if (!response.ok) throw new Error("Failed to fetch borrowed books");
-
         const data = await response.json();
         setBorrowedBooks(data);
       } catch (err) {
@@ -43,7 +51,6 @@ export default function MyBooks() {
         setLoading(false);
       }
     };
-
     fetchBorrowedBooks();
   }, [currUser]);
 
@@ -67,202 +74,179 @@ export default function MyBooks() {
     };
   };
 
-  const handleOpenDialog = (book) => {
-    setSelectedBook(book);
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedBook(null);
-  };
   const handleReturnBook = async (copyId) => {
     try {
       setLoading(true);
       const response = await fetch(`/api/books/copies/${copyId}/return`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to return book");
-      }
-
+      if (!response.ok) throw new Error(data.error || "Failed to return book");
       setBorrowedBooks((prev) =>
         prev.filter((book) => book.copy_id !== copyId)
       );
-
-      handleCloseDialog();
+      setOpenDialog(false);
     } catch (err) {
-      console.error("Return error:", err);
       alert(err.message);
     } finally {
       setLoading(false);
     }
   };
-  if (loading) {
+
+  if (loading && borrowedBooks.length === 0) {
     return (
-      <Box className="mb-loading">
+      <Box className="mb-loading-container">
         <CircularProgress />
+        <Typography sx={{ mt: 2, color: "text.secondary" }}>
+          Loading your library...
+        </Typography>
       </Box>
     );
   }
 
   return (
-    <section id="mybooks-page">
-      <Container maxWidth="lg" className="mb-container">
-        {error && (
-          <Alert severity="error" className="mb-error">
-            {error}
-          </Alert>
-        )}
+    <Container maxWidth="lg" className="mybooks-page">
+      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
+        <HistoryIcon color="primary" sx={{ fontSize: 32 }} />
+        <Typography variant="h4" fontWeight="bold">
+          My Borrowed Books
+        </Typography>
+      </Box>
 
-        {borrowedBooks.length === 0 ? (
-          <Alert severity="info" className="mb-no-books">
-            You haven't borrowed any books yet
-          </Alert>
-        ) : (
-          <Box className="mb-grid">
-            {borrowedBooks.map((book) => {
-              const dueStatus = getDueStatus(book.due_date);
-              return (
-                <Box
-                  key={book.copy_id}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {borrowedBooks.length === 0 ? (
+        <Paper variant="outlined" className="mb-empty-state">
+          <Typography variant="h6">Your library is empty</Typography>
+          <Typography color="text.secondary">
+            Go to Explore to find your next read!
+          </Typography>
+        </Paper>
+      ) : (
+        <Grid container spacing={3} alignItems={"stretch"}>
+          {borrowedBooks.map((book) => {
+            const status = getDueStatus(book.due_date);
+            return (
+              <Grid item xs={12} sm={6} md={4} key={book.copy_id}>
+                <Card
                   className="mb-book-card"
-                  onClick={() => handleOpenDialog(book)}
+                  onClick={() => {
+                    setSelectedBook(book);
+                    setOpenDialog(true);
+                  }}
                 >
-                  <Box className="mb-poster-wrapper">
-                    <CardMedia
-                      component="img"
-                      image={book.poster}
-                      alt={book.title}
-                      className="mb-poster"
-                    />
-                  </Box>
-                  <Box className="mb-book-info">
-                    <h1 className="mb-book-title">{book.title}</h1>
-                    <Stack direction={"row"} gap={2}>
-                      <h2 className="mb-dialog-location">{book.publisher}</h2>
-                      <h2 className="mb-dialog-location">{book.location}</h2>
-                    </Stack>
-                    <Chip
-                      label={dueStatus.text}
-                      color={dueStatus.color}
-                      variant={dueStatus.variant}
-                      size="small"
-                      className="mb-status-chip"
-                    />
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
-        )}
-
-        {/* Book Details Dialog */}
-        <Dialog
-          open={openDialog}
-          onClose={handleCloseDialog}
-          maxWidth="sm"
-          fullWidth
-          className="mb-dialog"
-        >
-          <DialogTitle className="mb-dialog-title">Book Details</DialogTitle>
-          <DialogContent className="mb-dialog-content">
-            {selectedBook && (
-              <Stack spacing={2}>
-                <Box className="mb-dialog-poster-wrapper">
                   <CardMedia
                     component="img"
-                    image={selectedBook.poster}
-                    alt={selectedBook.title}
-                    className="mb-dialog-poster"
+                    image={book.poster}
+                    alt={book.title}
+                    className="mb-card-media"
                   />
-                </Box>
-
-                <Box className="mb-dialog-grid">
-                  <Box className="mb-dialog-item">
-                    <Typography className="mb-dialog-label">Title</Typography>
-                    <Typography className="mb-dialog-value">
-                      {selectedBook.title}
-                    </Typography>
-                  </Box>
-
-                  <Box className="mb-dialog-item">
-                    <Typography className="mb-dialog-label">
-                      Publisher
-                    </Typography>
-                    <Typography className="mb-dialog-value">
-                      {selectedBook.publisher}
-                    </Typography>
-                  </Box>
-
-                  <Box className="mb-dialog-item">
-                    <Typography className="mb-dialog-label">Theme</Typography>
+                  <Box className="mb-card-content">
+                    <h6 className="mb-title-truncate">{book.title}</h6>
+                    <p className="mb-location">
+                      <LocationIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                      {book.location}
+                    </p>
                     <Chip
-                      label={selectedBook.theme}
+                      label={status.text}
+                      color={status.color}
+                      variant={status.variant}
                       size="small"
-                      variant="outlined"
-                      className="mb-chip-theme"
-                      sx={{ width: "40%" }}
+                      sx={{ justifySelf: "end", marginTop: "auto" }}
                     />
                   </Box>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
 
-                  <Box className="mb-dialog-item">
-                    <Typography className="mb-dialog-label">
-                      Location
-                    </Typography>
-                    <Typography className="mb-dialog-value">
-                      {selectedBook.location}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box className="mb-dialog-grid">
-                  <Box>
-                    <Typography className="mb-dialog-label">
-                      Borrowed Date
-                    </Typography>
-                    <Typography className="mb-dialog-value">
-                      {new Date(
-                        selectedBook.borrowed_date
-                      ).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography className="mb-dialog-label">
-                      Due Date
-                    </Typography>
-                    <Typography className="mb-dialog-value">
-                      {new Date(selectedBook.due_date).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box>
-                  <Typography className="mb-dialog-label">Status</Typography>
-                  <Chip
-                    label={getDueStatus(selectedBook.due_date).text}
-                    color={getDueStatus(selectedBook.due_date).color}
-                    variant={getDueStatus(selectedBook.due_date).variant}
-                    size="small"
-                    className="mb-status-chip"
+      {/* Modern Detail Dialog */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        {selectedBook && (
+          <>
+            <DialogTitle sx={{ fontWeight: "bold" }}>
+              Return Confirmation
+            </DialogTitle>
+            <DialogContent dividers>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
+                <Box sx={{ width: { xs: "100%", sm: 140 } }}>
+                  <img
+                    src={selectedBook.poster}
+                    alt={selectedBook.title}
+                    style={{ width: "100%", borderRadius: "8px" }}
                   />
                 </Box>
-                <Button
-                  variant="contained"
-                  onClick={() => handleReturnBook(selectedBook.copy_id)}
-                >
-                  Return Book
-                </Button>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h5" gutterBottom>
+                    {selectedBook.title}
+                  </Typography>
+                  <Stack spacing={1}>
+                    <DetailRow
+                      icon={<PublisherIcon />}
+                      label="Publisher"
+                      value={selectedBook.publisher}
+                    />
+                    <DetailRow
+                      icon={<LocationIcon />}
+                      label="Location"
+                      value={selectedBook.location}
+                    />
+                    <DetailRow
+                      icon={<DateIcon />}
+                      label="Due Date"
+                      value={new Date(
+                        selectedBook.due_date
+                      ).toLocaleDateString()}
+                    />
+                  </Stack>
+                </Box>
               </Stack>
-            )}
-          </DialogContent>
-        </Dialog>
-      </Container>
-    </section>
+            </DialogContent>
+            <Box sx={{ p: 2, display: "flex", gap: 2 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => setOpenDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                onClick={() => handleReturnBook(selectedBook.copy_id)}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={24} /> : "Confirm Return"}
+              </Button>
+            </Box>
+          </>
+        )}
+      </Dialog>
+    </Container>
+  );
+}
+
+// Helper component for Dialog rows
+function DetailRow({ icon, label, value }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box sx={{ color: "text.secondary", display: "flex" }}>{icon}</Box>
+      <Typography variant="body2">
+        <strong>{label}:</strong> {value}
+      </Typography>
+    </Box>
   );
 }

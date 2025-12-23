@@ -22,6 +22,7 @@ export default function App() {
           <Route path="explore/mybooks" element={<Mybooks />} />
 
           <Route path="dashboard" element={<DashboardPage />}>
+            <Route index element={<BooksManagement />} />
             <Route path="booksmanagments" element={<BooksManagement />} />
             <Route path="addbook" element={<AddBookForm />} />
             <Route path="userslist" element={<UsersList />} />

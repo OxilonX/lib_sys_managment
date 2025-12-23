@@ -43,7 +43,6 @@ export default function Layout() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -61,15 +60,14 @@ export default function Layout() {
           },
         ]
       : []),
-    ...(currUser?.user?.role === "user"
-      ? [{ label: "My Books", icon: <BookIcon />, path: "/explore/mybooks" }]
-      : []),
+
+    { label: "My Books", icon: <BookIcon />, path: "/explore/mybooks" },
   ];
 
-  // REMOVED: Users Management Tab
   const dashboardTabs = [
     { label: "Books Management", path: "/dashboard/booksmanagments" },
     { label: "Add New Book", path: "/dashboard/addbook" },
+    { label: "Users Management", path: "/dashboard/userslist" },
   ];
 
   const getActiveTab = () => {
@@ -83,7 +81,6 @@ export default function Layout() {
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <AppBar position="sticky" elevation={0} className="layout-appbar">
         <Toolbar className="layout-toolbar">
-          {/* LEFT: Logo */}
           <Box className="layout-left-section">
             <img
               src={logo}
@@ -101,7 +98,6 @@ export default function Layout() {
                   value={getActiveTab()}
                   onChange={(e, v) => navigate(dashboardTabs[v].path)}
                   className="layout-tabs"
-                  centered
                 >
                   {dashboardTabs.map((tab) => (
                     <Tab key={tab.path} label={tab.label} />
@@ -159,6 +155,7 @@ export default function Layout() {
             </Avatar>
           </Box>
 
+          {/* Profile Menu */}
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -192,6 +189,7 @@ export default function Layout() {
         </Toolbar>
       </AppBar>
 
+      {/* Mobile Drawer */}
       <Drawer
         anchor="left"
         open={mobileOpen}
@@ -215,6 +213,7 @@ export default function Layout() {
         </Box>
       </Drawer>
 
+      {/* Main Content */}
       <main className="layout-content">
         <Outlet />
       </main>
