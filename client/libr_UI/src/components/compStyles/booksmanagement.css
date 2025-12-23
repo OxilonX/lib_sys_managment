@@ -1,180 +1,317 @@
-/* Container & Layout */
+/* Books Management Container */
 .bm-container {
+  width: 100%;
 }
 
+/* Header */
+.bm-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #1976d2;
+}
+
+.bm-header-icon {
+  font-size: 32px;
+  color: #1976d2;
+}
+
+.bm-header-title {
+  font-weight: 700;
+  color: #333;
+}
+
+/* Alerts */
+.bm-alert-error {
+  margin-bottom: 24px;
+  border-radius: 8px;
+}
+
+.bm-alert-info {
+  border-radius: 8px;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* Loading */
 .bm-loading {
   display: flex;
   justify-content: center;
-  padding: 32px;
+  align-items: center;
+  min-height: 400px;
 }
 
-/* Title */
-.bm-title{
-  font-weight: 700;
-  font-size: 2rem;
-  margin: 0 0 24px;
-  color: #000;
+.bm-loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
 }
 
-/* Error Alert */
-.bm-error {
+/* Books List */
+.bm-books-list-wrapper {
+  margin-bottom: 24px;
+}
+
+.bm-books-count {
+  color: #666;
   margin-bottom: 16px;
+  font-size: 14px;
 }
 
-/* Accordion */
-.bm-accordion-list {
+.bm-books-count strong {
+  font-weight: 700;
+  color: #333;
+}
+
+.bm-books-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+/* Accordion */
 .bm-accordion {
-  background-color: #f9f9f9;
+  background: white;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
+  box-shadow: none;
   transition: all 0.3s ease;
 }
 
-.bm-accordion:hover {
-  background-color: rgb(248, 248, 248);
+.bm-accordion:before {
+  display: none;
+}
+
+.bm-accordion.bm-accordion-expanded {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+.bm-accordion-summary {
+  padding: 16px 20px;
+  transition: all 0.3s ease;
+}
+
+.bm-accordion-summary:hover {
+  background: #f5f7fa;
 }
 
 .bm-summary-content {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-    gap: 16px;
-  flex: 1;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
 }
 
-.bm-book-info {
-  display: flex;
-  flex-direction: column;
+.bm-summary-info {
+  flex: 1;
 }
 
 .bm-book-title {
   font-weight: 600;
-  color: #000;
+  color: #333;
+  font-size: 16px;
+  margin-bottom: 8px;
 }
 
-.bm-book-meta {
-  color: #666;
+.bm-book-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
+.bm-chip {
+  height: 24px;
+  font-size: 12px;
+}
 
+.bm-chip-theme {
+  height: 24px;
+  font-size: 12px;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.bm-chip-copies {
+  height: 24px;
+  font-size: 12px;
+  background: #f0f7ff;
+  color: #1565c0;
+}
+
+.bm-add-copy-btn {
+  text-transform: capitalize;
+  color: #1976d2;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.bm-add-copy-btn:hover {
+  background: #e3f2fd;
+}
 
 /* Accordion Details */
-.bm-details {
-  padding: 16px;
+.bm-accordion-details {
+  padding: 20px;
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
 }
 
 .bm-no-copies {
   color: #999;
+  text-align: center;
+  padding: 16px;
+  font-style: italic;
 }
 
 /* Table */
 .bm-table-container {
-  background-color: #fff;
+  border-radius: 8px;
+  background: white;
 }
 
 .bm-table-header {
-  background-color: #f0f0f0;
+  background: #f5f7fa;
+  border-bottom: 2px solid #e0e0e0;
 }
 
-.bm-table-cell-header {
+.bm-table-header-cell {
   font-weight: 700;
-  color: #000;
+  color: #333;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .bm-table-row {
-  border-bottom: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid #eee;
+}
+
+.bm-table-row:hover {
+  background: #f9f9f9;
 }
 
 .bm-table-cell {
-  color: #000;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-/* Status Badge */
-.bm-status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-}
 
-.bm-available {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.bm-borrowed {
-  background-color: #ffebee;
-  color: #c62828;
-}
 
 .bm-delete-btn {
-  transition: all 0.2s ease;
+  color: #d32f2f;
+  transition: all 0.3s ease;
 }
 
 .bm-delete-btn:hover {
-  transform: scale(1.1);
+  background: #ffebee;
 }
 
 /* Pagination */
-.bm-pagination {
+.bm-pagination-container {
   display: flex;
   justify-content: center;
   margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
 }
 
 /* Dialog */
+.bm-dialog-backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.bm-dialog-paper {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
 .bm-dialog-title {
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #000;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 16px;
 }
 
 .bm-dialog-content {
-  padding-top: 16px;
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 
-.bm-input {
-  margin-bottom: 16px;
+.bm-dialog-stack {
+  margin-top: 8px;
+}
+
+.bm-dialog-input {
+  transition: all 0.3s ease;
+}
+
+.bm-dialog-input:hover {
+  background: #fcfcfc;
 }
 
 .bm-dialog-actions {
-  padding: 16px;
+  padding: 16px 24px;
+  border-top: 1px solid #eee;
+  gap: 8px;
 }
 
-.bm-cancel-btn {
-  text-transform: none;
-  color: #666;
-}
-
-.bm-submit-btn {
-  text-transform: none;
+.bm-dialog-cancel-btn {
+  text-transform: capitalize;
   font-weight: 600;
-}
-.add-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
+  color: #666;
   transition: all 0.3s ease;
-  text-transform: none;
-  user-select: none;
-  margin-right:20px;
 }
 
-.add-icon-button :hover {
-  transform: translateY(-2px);
+.bm-dialog-cancel-btn:hover {
+  background: #f5f5f5;
 }
 
-.add-icon-button :active {
-  transform: translateY(0);
+.bm-dialog-submit-btn {
+  text-transform: capitalize;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  transition: all 0.3s ease;
 }
 
-.sadd-icon-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
+.bm-dialog-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4);
+}
+
+.bm-dialog-submit-btn:disabled {
+  background: #ccc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bm-summary-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bm-add-copy-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .bm-book-chips {
+    flex-direction: column;
+  }
+
+  .bm-chip,
+  .bm-chip-theme,
+  .bm-chip-copies {
+    width: 100%;
+  }
 }

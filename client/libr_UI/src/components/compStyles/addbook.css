@@ -1,0 +1,237 @@
+/* Add Book Form Container */
+.abf-container {
+  width: 100%;
+}
+
+/* Header */
+.abf-header {
+  display: flex;
+  align-items: center;
+ font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 24px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #1976d2;
+}
+
+.abf-header-icon {
+  color: #1976d2;
+}
+
+.abf-header-title {
+  font-weight: 700;
+  font-size: 2rem;
+  color: #333;
+}
+
+/* Alerts */
+.abf-alert-success {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.abf-alert-error {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Form */
+.abf-form {
+  width: 100%;
+}
+
+.abf-stack {
+  gap: 32px;
+}
+
+/* Sections */
+.abf-section {
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #fafbfc 100%);
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.abf-section:hover {
+  border-color: #1976d2;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+}
+
+
+.abf-section-code {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 2px solid #90caf9;
+}
+
+.abf-section-title {
+  font-weight: 700;
+  color: #535252;
+  margin-bottom: 32px;
+  font-size: 1.4rem;
+}
+
+.abf-section-code{
+
+  padding-top: 0;
+  
+}
+.abf-section-code .abf-section-title.abf-code-title {
+  color: #1565c0;
+
+  margin-bottom: 10px;  margin-top: 24px;
+}
+
+.abf-section-content {
+  gap: 16px;
+}
+
+/* Inputs */
+.abf-textfield {
+  width: 100%;
+}
+
+.abf-textfield .MuiOutlinedInput-root {
+  border-radius: 8px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.abf-textfield .MuiOutlinedInput-root:hover {
+  background: #fcfcfc;
+}
+
+.abf-select {
+  border-radius: 8px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.abf-select:hover {
+  background: #fcfcfc;
+}
+
+.abf-select .MuiOutlinedInput-notchedOutline {
+  border-color: #ccc;
+}
+
+/* Grid */
+.abf-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Code Section */
+.abf-code-description {
+  color: #1565c0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.abf-code-input-group {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.abf-code-input {
+  flex: 1;
+  border-radius: 8px;
+  background: white;
+}
+
+.abf-code-input-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+
+
+.abf-generate-btn:hover {
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.2);
+}
+
+/* Actions */
+.abf-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 16px;
+}
+
+.abf-reset-btn {
+  text-transform: capitalize;
+  font-weight: 600;
+  color: #666;
+  border-color: #ddd;
+  padding: 10px 24px;
+  transition: all 0.3s ease;
+}
+
+.abf-reset-btn:hover {
+  border-color: #999;
+  background: #f5f5f5;
+}
+
+.abf-submit-btn {
+  text-transform: capitalize;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.abf-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4);
+}
+
+.abf-submit-btn:disabled {
+  background: #ccc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .abf-header {
+    margin-bottom: 24px;
+  }
+
+  .abf-section {
+    padding: 16px;
+  }
+
+  .abf-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .abf-code-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .abf-code-input {
+    width: 100%;
+  }
+
+  .abf-generate-btn {
+    width: 100%;
+  }
+
+  .abf-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .abf-reset-btn,
+  .abf-submit-btn {
+    width: 100%;
+  }
+}

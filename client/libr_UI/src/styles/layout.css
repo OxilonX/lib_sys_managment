@@ -1,29 +1,119 @@
+:root {
+  --primary-blue: #5eb3f6;
+  --bg-gray: #f8fafd;
+  --text-dark: #2c3e50;
+  --border-color: #edf2f7;
+}
 
-.p-menubar{
-    background-color: var(--background-secondary);
+.layout-appbar {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark) !important;
 }
-.p-menubar *{
-     transition: all 0.3s ease; 
+
+.layout-toolbar {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  height: 70px;
 }
-.p-menuitem, .p-menuitem-text,.p-menuitem-link{
-    color: var( --text-color);
+
+.layout-left-section {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
-.p-menuitem-icon{
-    filter: brightness(50%);
+
+.layout-center-section {
+  display: flex;
+  justify-content: center;
+  flex: 2;
 }
-.p-menuitem-link:hover {
-  background-color:  var(--background-teritary);
+
+.layout-right-section {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  gap: 12px;
 }
-.user-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    font-weight:600;
-    background-color: var(--primary-color);
-    border: 3px solid transparent ;
-    scale: 0.8;
+
+.layout-logo {
+  height: 45px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
-.user-icon:hover{
-      border: 3px solid  var(--primary-hover-color);
-} 
+
+.layout-logo:hover {
+  transform: scale(1.05);
+}
+
+.nav-btn {
+  color: #64748b !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  padding: 8px 18px !important;
+  border-radius: 20px !important;
+  margin: 0 4px !important;
+}
+
+.nav-btn.active {
+  background-color: rgba(94, 179, 246, 0.1) !important;
+  color: var(--primary-blue) !important;
+}
+
+.layout-tabs .MuiTab-root {
+  text-transform: none;
+  font-weight: 600;
+  min-height: 70px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.layout-tabs .Mui-selected {
+  color: var(--primary-blue) !important;
+}
+
+.layout-tabs .MuiTabs-indicator {
+  background-color: var(--primary-blue);
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.layout-search-field .MuiOutlinedInput-root {
+  background: #f1f5f9;
+  border-radius: 20px;
+  width: 200px;
+  transition: all 0.3s ease;
+}
+
+.layout-search-field .MuiOutlinedInput-root.Mui-focused {
+  background: white;
+  width: 260px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.layout-search-field fieldset {
+  border: none;
+}
+
+.layout-avatar {
+  background: linear-gradient(135deg, var(--primary-blue), #3b82f6) !important;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(94, 179, 246, 0.4);
+}
+
+.layout-content {
+  background-color: var(--bg-gray);
+  padding: 32px;
+  flex-grow: 1;
+}
+
+@media (max-width: 900px) {
+  .layout-content {
+    padding: 16px;
+  }
+}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
 import {
   Accordion,
   AccordionSummary,
@@ -23,47 +24,48 @@ import {
   CircularProgress,
   Alert,
   Stack,
+  Chip,
 } from "@mui/material";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
 import {
+  AddCircle as AddCircleIcon,
   ExpandMore as ExpandMoreIcon,
   Delete as DeleteIcon,
+  LibraryBooks as BooksIcon,
 } from "@mui/icons-material";
-//css imports
 import "../components/compStyles/booksmanagement.css";
-export default function BooksManagement({
-  loading,
-  setLoading,
-  books,
-  loadBooks,
-}) {
+
+export default function BooksManagement() {
+  const { books, loading, fetchBooks } = useOutletContext();
   const [expandedBook, setExpandedBook] = useState(null);
   const [bookCopies, setBookCopies] = useState({});
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [newCopy, setNewCopy] = useState({ location: "", publisher: "" });
-
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [loadingCopies, setLoadingCopies] = useState(false);
   const itemsPerPage = 5;
 
-  // Fetch all books
   useEffect(() => {
-    loadBooks();
+    fetchBooks();
   }, []);
 
-  // Fetch copies for a book
+  const totalPages = Math.ceil(books.length / itemsPerPage);
+
   const fetchCopies = async (bookId) => {
     try {
+      setLoadingCopies(true);
       const response = await fetch(`/api/books/${bookId}/copies`);
       const data = await response.json();
       setBookCopies((prev) => ({
         ...prev,
         [bookId]: data,
       }));
+      setError(null);
     } catch (err) {
-      setError("Failed to fetch copies");
+      setError(err.message);
+    } finally {
+      setLoadingCopies(false);
     }
   };
 
@@ -97,7 +99,7 @@ export default function BooksManagement({
     }
 
     try {
-      setLoading(true);
+      setLoadingCopies(true);
       setError(null);
 
       const copyData = {
@@ -113,13 +115,12 @@ export default function BooksManagement({
 
       if (!response.ok) throw new Error("Failed to add copy");
 
-      // Refresh copies
       await fetchCopies(selectedBook.id);
       handleCloseDialog();
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setLoadingCopies(false);
     }
   };
 
@@ -154,143 +155,183 @@ export default function BooksManagement({
 
   return (
     <Box className="bm-container">
-      <h1 className="bm-title">Books Management</h1>
+      {/* Header */}
+      <Box className="abf-header">
+        <h1 className="abf-title">Books Management</h1>
+      </Box>
 
       {error && (
-        <Alert severity="error" className="bm-error">
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          className="bm-alert-error"
+        >
           {error}
         </Alert>
       )}
 
-      {/* Books Accordion List */}
-
       {books.length === 0 ? (
-        <Alert severity="info" className="mb-no-books">
-          Your Library is empty
+        <Alert severity="info" className="bm-alert-info">
+          Your library is empty. Start by adding some books!
         </Alert>
       ) : (
         <>
-          <Box className="bm-accordion-list">
-            {paginatedBooks.map((book) => (
-              <Accordion
-                key={book.id}
-                expanded={expandedBook === book.id}
-                onChange={() => handleAccordionChange(book.id)}
-                className="bm-accordion"
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box className="bm-summary-content">
-                    <Box className="bm-book-info">
-                      <Typography variant="body1" className="bm-book-title">
-                        {book.title}
-                      </Typography>
-                      <Typography variant="caption" className="bm-book-meta">
-                        {book.catalog_code}
-                      </Typography>
-                    </Box>
-                    <div>
-                      <AddCircleIcon
-                        className="add-icon-button"
-                        sx={{ width: 25, height: 25 }}
-                        color="primary"
-                        onClick={() => handleOpenDialog(book)}
-                      />
-                    </div>
-                  </Box>
-                </AccordionSummary>
+          <Box className="bm-books-list-wrapper">
+            <Typography variant="body2" className="bm-books-count">
+              Total Books: <strong>{books.length}</strong>
+            </Typography>
 
-                <AccordionDetails className="bm-details">
-                  {!bookCopies[book.id] ? (
-                    <CircularProgress size={24} />
-                  ) : bookCopies[book.id].length === 0 ? (
-                    <Typography className="bm-no-copies">
-                      No copies available
-                    </Typography>
-                  ) : (
-                    <TableContainer
-                      component={Paper}
-                      className="bm-table-container"
-                    >
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow className="bm-table-header">
-                            <TableCell className="bm-table-cell-header">
-                              Location
-                            </TableCell>
-                            <TableCell className="bm-table-cell-header">
-                              Publisher
-                            </TableCell>
-                            <TableCell className="bm-table-cell-header">
-                              Status
-                            </TableCell>
-                            <TableCell
-                              align="right"
-                              className="bm-table-cell-header"
-                            >
-                              Action
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {bookCopies[book.id].map((copy) => (
-                            <TableRow
-                              key={copy.copy_id}
-                              className="bm-table-row"
-                            >
-                              <TableCell className="bm-table-cell">
-                                {copy.location}
+            <Box className="bm-books-list">
+              {paginatedBooks.map((book) => (
+                <Accordion
+                  key={book.id}
+                  expanded={expandedBook === book.id}
+                  onChange={() => handleAccordionChange(book.id)}
+                  className={`bm-accordion ${
+                    expandedBook === book.id ? "bm-accordion-expanded" : ""
+                  }`}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    className="bm-accordion-summary"
+                  >
+                    <Box className="bm-summary-content">
+                      <Box className="bm-summary-info">
+                        <Typography variant="body1" className="bm-book-title">
+                          {book.title}
+                        </Typography>
+                        <Box className="bm-book-chips">
+                          <Chip
+                            label={`Code: ${book.catalog_code}`}
+                            size="small"
+                            variant="outlined"
+                            className="bm-chip"
+                          />
+                          <Chip
+                            label={book.theme}
+                            size="small"
+                            className="bm-chip-theme"
+                          />
+                          <Chip
+                            label={`${book.total_copies || 0} copies`}
+                            size="small"
+                            className="bm-chip-copies"
+                          />
+                        </Box>
+                      </Box>
+
+                      <Button
+                        startIcon={<AddCircleIcon />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(book);
+                        }}
+                        className="bm-add-copy-btn"
+                      >
+                        Add Copy
+                      </Button>
+                    </Box>
+                  </AccordionSummary>
+
+                  <AccordionDetails className="bm-accordion-details">
+                    {loadingCopies ? (
+                      <Box className="bm-loading-container">
+                        <CircularProgress size={32} />
+                      </Box>
+                    ) : bookCopies[book.id]?.length === 0 ? (
+                      <Typography className="bm-no-copies">
+                        No copies available. Click "Add Copy" to add one.
+                      </Typography>
+                    ) : (
+                      <TableContainer className="bm-table-container">
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow className="bm-table-header">
+                              <TableCell className="bm-table-header-cell">
+                                Location
                               </TableCell>
-                              <TableCell className="bm-table-cell">
-                                {copy.publisher}
+                              <TableCell className="bm-table-header-cell">
+                                Publisher
                               </TableCell>
-                              <TableCell className="bm-table-cell">
-                                <Typography
-                                  variant="caption"
-                                  className={`bm-status-badge ${
-                                    copy.is_available === 1
-                                      ? "bm-available"
-                                      : "bm-borrowed"
-                                  }`}
-                                >
-                                  {copy.is_available === 1
-                                    ? "Available"
-                                    : "Borrowed"}
-                                </Typography>
+                              <TableCell className="bm-table-header-cell">
+                                Status
                               </TableCell>
                               <TableCell
                                 align="right"
-                                className="bm-table-cell"
+                                className="bm-table-header-cell"
                               >
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() =>
-                                    handleDeleteCopy(copy.copy_id, book.id)
-                                  }
-                                  className="bm-delete-btn"
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
+                                Action
                               </TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </AccordionDetails>
-              </Accordion>
-            ))}
+                          </TableHead>
+                          <TableBody>
+                            {bookCopies[book.id]?.map((copy) => (
+                              <TableRow
+                                key={copy.copy_id}
+                                className="bm-table-row"
+                              >
+                                <TableCell className="bm-table-cell">
+                                  {copy.location}
+                                </TableCell>
+                                <TableCell className="bm-table-cell">
+                                  {copy.publisher}
+                                </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={
+                                      copy.is_available === 1
+                                        ? "Available"
+                                        : "Borrowed"
+                                    }
+                                    size="small"
+                                    color={
+                                      copy.is_available === 1
+                                        ? "success"
+                                        : "secondary"
+                                    }
+                                    variant="filled"
+                                  />
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  className="bm-table-cell"
+                                >
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleDeleteCopy(copy.copy_id, book.id)
+                                    }
+                                    className="bm-delete-btn"
+                                  >
+                                    <DeleteIcon
+                                      fontSize="small"
+                                      color="error"
+                                    />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
           </Box>
-          {/* Pagination */}
-          <Box className="bm-pagination">
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={(e, value) => setPage(value)}
-              color="primary"
-            />
-          </Box>{" "}
+
+          {totalPages > 1 && (
+            <Box className="bm-pagination-container">
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(e, value) => setPage(value)}
+                color="primary"
+                size="medium"
+              />
+            </Box>
+          )}
         </>
       )}
 
@@ -300,38 +341,21 @@ export default function BooksManagement({
         onClose={handleCloseDialog}
         maxWidth="sm"
         fullWidth
-        className="bm-dialog"
-        // Styling the Dialog and Backdrop
         slotProps={{
           backdrop: {
-            sx: {
-              backgroundColor: "rgba(0, 0, 0, 0.4)",
-              backdropFilter: "blur(4px)",
-            },
+            className: "bm-dialog-backdrop",
           },
         }}
         PaperProps={{
-          sx: {
-            borderRadius: "12px",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
-            padding: "8px",
-          },
+          className: "bm-dialog-paper",
         }}
       >
-        <DialogTitle
-          sx={{
-            fontSize: "1.25rem",
-            fontWeight: 700,
-            color: "#1a1a1a",
-            borderBottom: "1px solid #eee",
-            pb: 2,
-          }}
-        >
-          Add a Copy of {selectedBook?.title}
+        <DialogTitle className="bm-dialog-title">
+          Add a Copy of "{selectedBook?.title}"
         </DialogTitle>
 
-        <DialogContent sx={{ py: 3 }}>
-          <Stack spacing={3} sx={{ mt: 3 }}>
+        <DialogContent className="bm-dialog-content">
+          <Stack spacing={3} className="bm-dialog-stack">
             <TextField
               label="Location"
               fullWidth
@@ -342,12 +366,7 @@ export default function BooksManagement({
               placeholder="e.g., Aisle A, Shelf 1"
               required
               variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                  "&:hover": { backgroundColor: "#fcfcfc" },
-                },
-              }}
+              className="bm-dialog-input"
             />
             <TextField
               label="Publisher"
@@ -358,65 +377,22 @@ export default function BooksManagement({
               }
               placeholder="Leave empty for default publisher"
               variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                  "&:hover": { backgroundColor: "#fcfcfc" },
-                },
-              }}
+              className="bm-dialog-input"
             />
           </Stack>
         </DialogContent>
 
-        <DialogActions
-          sx={{
-            padding: "16px 24px",
-            borderTop: "1px solid #eee",
-            gap: 1,
-            // Responsive layout: Stack buttons on mobile
-            flexDirection: { xs: "column-reverse", sm: "row" },
-            "& > button": {
-              width: { xs: "100%", sm: "auto" },
-              ml: { xs: 0, sm: 1 },
-            },
-          }}
-        >
-          <Button
-            onClick={handleCloseDialog}
-            sx={{
-              padding: "10px 20px",
-              fontSize: "0.9rem",
-              textTransform: "capitalize",
-              fontWeight: 600,
-              color: "#666",
-              "&:hover": { backgroundColor: "#f5f5f5" },
-            }}
-          >
+        <DialogActions className="bm-dialog-actions">
+          <Button onClick={handleCloseDialog} className="bm-dialog-cancel-btn">
             Cancel
           </Button>
           <Button
             onClick={handleAddCopy}
             variant="contained"
-            disabled={loading}
-            sx={{
-              padding: "10px 20px",
-              fontSize: "0.9rem",
-              textTransform: "capitalize",
-              fontWeight: 600,
-              backgroundColor: "#3f51b5",
-              borderRadius: "6px",
-              boxShadow: "none",
-              "&:hover": {
-                backgroundColor: "#303aa8",
-                boxShadow: "0 4px 12px rgba(63, 81, 181, 0.3)",
-              },
-              "&:disabled": {
-                backgroundColor: "#ccc",
-                color: "#fff",
-              },
-            }}
+            disabled={loadingCopies}
+            className="bm-dialog-submit-btn"
           >
-            {loading ? "Adding..." : "Add Copy"}
+            {loadingCopies ? "Adding..." : "Add Copy"}
           </Button>
         </DialogActions>
       </Dialog>

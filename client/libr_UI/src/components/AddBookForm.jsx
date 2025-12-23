@@ -1,22 +1,27 @@
 import { useState } from "react";
-import Container from "@mui/material/Container";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
-import Select from "@mui/material/Select";
-import Button from "@mui/material/Button";
-import QrCodeIcon from "@mui/icons-material/QrCode";
-import AddIcon from "@mui/icons-material/Add";
+import { useOutletContext } from "react-router-dom";
+import {
+  Box,
+  TextField,
+  InputLabel,
+  MenuItem,
+  FormControl,
+  Select,
+  Button,
+  Stack,
+  Paper,
+  Typography,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
+import { QrCode as QrCodeIcon, Add as AddIcon } from "@mui/icons-material";
 import { useBooksData } from "../contexts/booksDataContext";
 import ChipInput from "./ChipInput";
-//style import
-import "../styles/dashboardpg.css";
-export default function AddBookForm({ loadBooks }) {
+import "./compStyles/addbook.css";
+export default function AddBookForm() {
   const { submitNewBook, setBooks } = useBooksData();
+  const { fetchBooks } = useOutletContext();
 
-  // Single State Hook for All Inputs
   const [bookInputVal, setBookInputVal] = useState({
     title: "",
     catCode: "",
@@ -28,30 +33,30 @@ export default function AddBookForm({ loadBooks }) {
     keywords: [],
   });
 
-  const handleInputChange = (e) => {
-    const name = e.target.name;
-    const value = e.target.value;
+  const [usedCodes, setUsedCodes] = useState(new Set());
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
-    setBookInputVal((prevData) => ({
-      ...prevData,
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setBookInputVal((prev) => ({
+      ...prev,
       [name]: value,
     }));
+    setError(null);
   };
 
-  //validate all book infos before sending it
-  function validateBookInput(bookInfo) {
-    if (!bookInfo.title.trim()) return false;
-    if (!bookInfo.location.trim()) return false;
-    if (!bookInfo.poster) return false;
-    if (!bookInfo.theme) return false;
-
-    if (!bookInfo.authors || bookInfo.authors.length === 0) return false;
-
-    return true;
-  }
-
-  //Code Generation Logic
-  const [usedCodes, setUsedCodes] = useState(new Set());
+  const validateBookInput = (bookInfo) => {
+    if (!bookInfo.title.trim()) return "Title is required";
+    if (!bookInfo.location.trim()) return "Location is required";
+    if (!bookInfo.poster.trim()) return "Poster URL is required";
+    if (!bookInfo.theme) return "Theme is required";
+    if (!bookInfo.publisher.trim()) return "Publisher is required";
+    if (!bookInfo.authors || bookInfo.authors.length === 0)
+      return "At least one author is required";
+    return null;
+  };
 
   const generateCode = (length = 8) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -72,7 +77,7 @@ export default function AddBookForm({ loadBooks }) {
 
   const handleGenerateCode = () => {
     const newCode = getUniqueCode();
-    setBookInputVal((prevData) => ({ ...prevData, catCode: newCode }));
+    setBookInputVal((prev) => ({ ...prev, catCode: newCode }));
   };
 
   const resetForm = () => {
@@ -83,41 +88,46 @@ export default function AddBookForm({ loadBooks }) {
       location: "",
       theme: "",
       poster: "",
-      authors: [],
       publisher: "",
+      authors: [],
       keywords: [],
     });
+    setSuccess(false);
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateBookInput(bookInputVal)) {
-      alert(
-        "Please fill in all required fields (Title, location, theme, Authors, publisher, Poster)."
-      );
+    const validationError = validateBookInput(bookInputVal);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     try {
+      setLoading(true);
       const result = await submitNewBook(bookInputVal);
       setUsedCodes((prev) => new Set(prev).add(bookInputVal.catCode));
       setBooks((prev) => [...prev, result]);
+      setSuccess(true);
       resetForm();
-      loadBooks();
-      alert(`Book "${bookInputVal.title}" added successfully!`);
-    } catch (error) {
-      console.error("add book request Submission Error:", error);
-      alert(`Failed to add book: ${error.message}`);
+      fetchBooks();
+
+      setTimeout(() => setSuccess(false), 4000);
+    } catch (err) {
+      setError(err.message || "Failed to add book");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle authors array change
   const handleAuthorsChange = (authors) => {
     setBookInputVal((prev) => ({
       ...prev,
       authors: authors,
     }));
+    setError(null);
   };
 
   const handleKeywordsChange = (keywords) => {
@@ -128,119 +138,199 @@ export default function AddBookForm({ loadBooks }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="book-form">
-      <h1 className="form-heading">Add A New Book</h1>
-      <div className="form-grid">
-        {/* Book Title */}
-        <TextField
-          name="title"
-          value={bookInputVal.title}
-          onChange={(e) => handleInputChange(e)}
-          label="Book Title"
-          variant="outlined"
-        />
+    <Box className="abf-container">
+      {/* Header */}
+      <Box className="abf-header">
+        <h1 className="abf-header-title ">Add New Book</h1>
+      </Box>
 
-        {/* Book Theme */}
-        <FormControl fullWidth>
-          <InputLabel id="selectedTheme-select-label">Theme</InputLabel>
-          <Select
-            labelId="selectedTheme-select-label"
-            id="selectedTheme-select"
-            value={bookInputVal.theme}
-            label="Theme"
-            onChange={(e) =>
-              setBookInputVal((prev) => ({
-                ...prev,
-                theme: e.target.value.toString(),
-              }))
-            }
-          >
-            <MenuItem value={"Action"}>Action</MenuItem>
-            <MenuItem value={"Science"}>Science</MenuItem>
-            <MenuItem value={"History"}>History</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Book location */}
-        <TextField
-          onChange={(e) => handleInputChange(e)}
-          value={bookInputVal.location}
-          label="Book location"
-          variant="outlined"
-          name="location"
-        />
-
-        {/* Book Poster URL */}
-        <TextField
-          onChange={(e) => handleInputChange(e)}
-          value={bookInputVal.poster}
-          label="Poster URL"
-          variant="outlined"
-          name="poster"
-        />
-        {/* publisher  Input */}
-
-        <TextField
-          onChange={(e) => handleInputChange(e)}
-          value={bookInputVal.publisher}
-          name="publisher"
-          label="publisher"
-          variant="outlined"
-          fullWidth
-          sx={{ gridColumn: "1 / -1" }}
-        />
-        {/* Authors Chip Input */}
-
-        {/* Keywords Chip Input */}
-        <Box sx={{ gridColumn: "1 / -1", display: "flex", gap: 2 }}>
-          <Box sx={{ flex: 1 }}>
-            <ChipInput
-              label="Authors"
-              value={bookInputVal.authors}
-              onChange={handleAuthorsChange}
-            />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <ChipInput
-              label="Keywords"
-              value={bookInputVal.keywords}
-              onChange={handleKeywordsChange}
-            />
-          </Box>
-        </Box>
-        {/* Cat Code Generator */}
-        <div className="inp-catgenerator">
-          <TextField
-            sx={{ width: "100%" }}
-            variant="outlined"
-            disabled={true}
-            value={bookInputVal.catCode}
-          />
-          <Button
-            onClick={handleGenerateCode}
-            sx={{
-              fontSize: "0.7rem",
-              fontWeight: "600",
-              bgcolor: "#9e9e9e",
-              boxShadow: "none",
-            }}
-            variant="contained"
-            startIcon={<QrCodeIcon />}
-          >
-            generate
-          </Button>
-        </div>
-
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          sx={{ fontSize: "1rem" }}
-          variant="contained"
-          startIcon={<AddIcon />}
+      {success && (
+        <Alert
+          severity="success"
+          onClose={() => setSuccess(false)}
+          className="abf-alert-success"
         >
-          Add Book
-        </Button>
-      </div>
-    </form>
+          ✓ Book "{bookInputVal.title}" added successfully!
+        </Alert>
+      )}
+
+      {error && (
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          className="abf-alert-error"
+        >
+          {error}
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit} className="abf-form">
+        <Stack spacing={4} className="abf-stack">
+          {/* Basic Information Section */}
+          <Paper className="abf-section abf-section-basic">
+            <h2 className="abf-section-title">Basic Information</h2>
+
+            <Stack spacing={2} className="abf-section-content">
+              <TextField
+                fullWidth
+                name="title"
+                value={bookInputVal.title}
+                onChange={handleInputChange}
+                label="Book Title"
+                placeholder="Enter book title"
+                variant="outlined"
+                required
+                className="abf-textfield"
+              />
+
+              <Box className="abf-grid-2">
+                <FormControl fullWidth>
+                  <InputLabel id="theme-label">Theme</InputLabel>
+                  <Select
+                    labelId="theme-label"
+                    name="theme"
+                    value={bookInputVal.theme}
+                    onChange={handleInputChange}
+                    label="Theme"
+                    className="abf-select"
+                  >
+                    <MenuItem value="Action">Action</MenuItem>
+                    <MenuItem value="Science">Science</MenuItem>
+                    <MenuItem value="History">History</MenuItem>
+                    <MenuItem value="Fiction">Fiction</MenuItem>
+                    <MenuItem value="Romance">Romance</MenuItem>
+                    <MenuItem value="Mystery">Mystery</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  fullWidth
+                  name="publisher"
+                  value={bookInputVal.publisher}
+                  onChange={handleInputChange}
+                  label="Publisher"
+                  placeholder="Enter publisher name"
+                  variant="outlined"
+                  required
+                  className="abf-textfield"
+                />
+              </Box>
+
+              <TextField
+                fullWidth
+                name="location"
+                value={bookInputVal.location}
+                onChange={handleInputChange}
+                label="Book Location"
+                placeholder="e.g., Aisle A, Shelf 1"
+                variant="outlined"
+                required
+                className="abf-textfield"
+              />
+
+              <TextField
+                fullWidth
+                name="poster"
+                value={bookInputVal.poster}
+                onChange={handleInputChange}
+                label="Poster URL"
+                placeholder="https://example.com/poster.jpg"
+                variant="outlined"
+                required
+                type="url"
+                className="abf-textfield"
+              />
+            </Stack>
+          </Paper>
+
+          {/* Authors & Keywords Section */}
+          <Paper className="abf-section abf-section-authors">
+            <h2 className="abf-section-title">Authors & Keywords</h2>
+
+            <Stack spacing={2} className="abf-section-content">
+              <Box className="abf-grid-2">
+                <ChipInput
+                  label="Authors"
+                  value={bookInputVal.authors}
+                  onChange={handleAuthorsChange}
+                />
+                <ChipInput
+                  label="Keywords"
+                  value={bookInputVal.keywords}
+                  onChange={handleKeywordsChange}
+                />
+              </Box>
+            </Stack>
+          </Paper>
+
+          {/* Catalog Code Section */}
+          <Paper className="abf-section abf-section-code">
+            <h6 className="abf-section-title abf-code-title">Catalog Code</h6>
+
+            <Stack spacing={2} className="abf-section-content">
+              <p className="abf-code-description">
+                Auto-generated unique identifier for this book
+              </p>
+
+              <div className="abf-code-input-group">
+                <TextField
+                  fullWidth
+                  disabled
+                  value={bookInputVal.catCode}
+                  variant="outlined"
+                  className="abf-code-input"
+                  inputProps={{
+                    className: "abf-code-input-text",
+                  }}
+                />
+                <Button
+                  onClick={handleGenerateCode}
+                  variant="contained"
+                  startIcon={<QrCodeIcon />}
+                  className="abf-generate-btn"
+                  sx={{
+                    textTransform: "capitalize",
+                    fontWeight: "600",
+                    background:
+                      "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+                    boxShadow: " 0 4px 12px rgba(25, 118, 210, 0.3)",
+                    borderRadius: "8px",
+                    padding: "10px 24px",
+                    transition: " all 0.3s ease",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Generate
+                </Button>
+              </div>
+            </Stack>
+          </Paper>
+
+          {/* Submit Button */}
+          <Box className="abf-actions">
+            <Button
+              type="reset"
+              variant="outlined"
+              onClick={() => {
+                setError(null);
+                resetForm();
+              }}
+              className="abf-reset-btn"
+            >
+              Reset
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : <AddIcon />}
+              className="abf-submit-btn"
+            >
+              {loading ? "Adding Book..." : "Add Book"}
+            </Button>
+          </Box>
+        </Stack>
+      </form>
+    </Box>
   );
 }

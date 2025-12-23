@@ -110,7 +110,7 @@ def get_book_copies(book_id):
     cursor.execute(
         """
         SELECT bc.copy_id, bc.book_id, bc.location, p.name as publisher, 
-               bc.is_available, bc.borrowed_by, bc.borrowed_date
+               bc.is_available, bc.borrowed_by, bc.borrowed_date,bc.state
         FROM book_copies bc
         JOIN publishers p ON bc.publisher_id = p.id
         WHERE bc.book_id = ?
@@ -199,7 +199,8 @@ def get_user_borrowed_books(user_id):
             p.name as publisher,
             t.name as theme,
             bc.borrowed_date, 
-            bc.due_date
+            bc.due_date,
+            bc.state
         FROM book_copies bc
         JOIN books b ON bc.book_id = b.id
         LEFT JOIN publishers p ON bc.publisher_id = p.id
@@ -274,7 +275,7 @@ def borrow_book_copy(copy_id):
     try:
         # Check if copy exists and is available
         cursor.execute(
-            "SELECT is_available FROM book_copies WHERE copy_id = ?", (copy_id,)
+            "SELECT is_available,state FROM book_copies WHERE copy_id = ?", (copy_id,)
         )
         copy = cursor.fetchone()
 
@@ -284,14 +285,15 @@ def borrow_book_copy(copy_id):
         if copy["is_available"] == 0:
             return jsonify({"error": "Copy is not available"}), 400
 
+        new_state = max(0, copy["state"] - 5)
         # Update copy - mark as borrowed
         cursor.execute(
             """
             UPDATE book_copies 
-            SET is_available = 0, borrowed_by = ?, borrowed_date = ?, due_date = ?
+            SET is_available = 0, borrowed_by = ?, borrowed_date = ?, due_date = ?,state=?
             WHERE copy_id = ?
             """,
-            (user_id, datetime.now().isoformat(), due_date, copy_id),
+            (user_id, datetime.now().isoformat(), due_date, new_state, copy_id),
         )
 
         db.commit()
@@ -302,6 +304,7 @@ def borrow_book_copy(copy_id):
                     "message": "Book borrowed successfully",
                     "copy_id": copy_id,
                     "due_date": due_date,
+                    "new_state": new_state,
                 }
             ),
             200,

@@ -1,6 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 :root{
     --focus-ring: black;
@@ -9,8 +6,9 @@ body{
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+     background: var(--background-color);
 }
 section{
     background: var(--background-color);
-    margin: 32px 0 ;
+    margin:  0 ;
 }

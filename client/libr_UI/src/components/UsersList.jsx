@@ -3,6 +3,7 @@ import { Button, Box, Stack } from "@mui/material";
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import "./compStyles/userlist.css";
 import { useUsersData } from "../contexts/userDataContext";
@@ -17,6 +18,10 @@ export default function UsersList() {
   const [dialogAction, setDialogAction] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(4);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailPanelUser, setDetailPanelUser] = useState(null);
+  const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [loadingBooks, setLoadingBooks] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -37,6 +42,26 @@ export default function UsersList() {
     }
   };
 
+  const handleUserClick = async (user) => {
+    setDetailPanelUser(user);
+    setDetailDialogOpen(true);
+    await fetchUserBorrowedBooks(user.user_id);
+  };
+
+  const fetchUserBorrowedBooks = async (userId) => {
+    try {
+      setLoadingBooks(true);
+      const response = await fetch(`/api/users/${userId}/borrowed`);
+      if (!response.ok) throw new Error("Failed to fetch borrowed books");
+      const data = await response.json();
+      setBorrowedBooks(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingBooks(false);
+    }
+  };
+
   const handleOpenDialog = (user, action) => {
     setSelectedUser(user);
     setDialogAction(action);
@@ -47,6 +72,12 @@ export default function UsersList() {
     setOpenDialog(false);
     setSelectedUser(null);
     setDialogAction(null);
+  };
+
+  const handleCloseDetailDialog = () => {
+    setDetailDialogOpen(false);
+    setDetailPanelUser(null);
+    setBorrowedBooks([]);
   };
 
   const handleConfirmAction = async () => {
@@ -75,13 +106,18 @@ export default function UsersList() {
 
       if (dialogAction === "delete") {
         setUsers(users.filter((u) => u.user_id !== selectedUser.user_id));
+        if (detailPanelUser?.user_id === selectedUser.user_id) {
+          handleCloseDetailDialog();
+        }
       } else {
         const updatedUserFields = { ...body };
-        setUsers(
-          users.map((u) =>
-            u.user_id === selectedUser.user_id ? { ...u, ...body } : u
-          )
+        const updatedUsers = users.map((u) =>
+          u.user_id === selectedUser.user_id ? { ...u, ...body } : u
         );
+        setUsers(updatedUsers);
+        if (detailPanelUser?.user_id === selectedUser.user_id) {
+          setDetailPanelUser({ ...detailPanelUser, ...body });
+        }
         if (currUser?.user?.user_id === selectedUser.user_id) {
           setCurrUser((prev) => ({
             ...prev,
@@ -145,7 +181,9 @@ export default function UsersList() {
 
   return (
     <div className="users-container">
-      <h2 className="users-title">Users Management</h2>
+      <Box className="abf-header">
+        <h1 className="users-title">Users Management</h1>
+      </Box>
 
       {error && <div className="users-error">{error}</div>}
 
@@ -155,7 +193,11 @@ export default function UsersList() {
         <div className="users-list-wrapper">
           <ul className="users-list">
             {currentUsers.map((user) => (
-              <li key={user.user_id} className="users-list-item">
+              <li
+                key={user.user_id}
+                className="users-list-item"
+                onClick={() => handleUserClick(user)}
+              >
                 <div className="user-info">
                   <div className="user-avatar">
                     {user.fname[0].toUpperCase()}
@@ -176,7 +218,10 @@ export default function UsersList() {
                   )}
 
                   <button
-                    onClick={() => handleOpenDialog(user, "toggleSubscribe")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenDialog(user, "toggleSubscribe");
+                    }}
                     className={
                       user.is_subscribed ? "btn btn-danger" : "btn btn-success"
                     }
@@ -185,7 +230,10 @@ export default function UsersList() {
                   </button>
 
                   <button
-                    onClick={() => handleOpenDialog(user, "toggleAdmin")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenDialog(user, "toggleAdmin");
+                    }}
                     className={
                       user.role === "admin"
                         ? "btn btn-warning"
@@ -196,7 +244,10 @@ export default function UsersList() {
                   </button>
 
                   <button
-                    onClick={() => handleOpenDialog(user, "delete")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenDialog(user, "delete");
+                    }}
                     className="btn btn-danger"
                   >
                     Delete
@@ -259,6 +310,137 @@ export default function UsersList() {
           </div>
         </div>
       )}
+
+      {/* Detail Dialog */}
+      {detailDialogOpen && detailPanelUser && (
+        <div
+          className="detail-dialog-overlay"
+          onClick={handleCloseDetailDialog}
+        >
+          <div
+            className="detail-dialog-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="detail-dialog-header">
+              <h2>User Details</h2>
+              <button
+                className="detail-close-btn"
+                onClick={handleCloseDetailDialog}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="detail-dialog-content">
+              {/* Personal Information Section */}
+              <div className="detail-section">
+                <h3>Personal Information</h3>
+                <div className="detail-info-grid">
+                  <div className="detail-row">
+                    <span className="detail-label">Full Name:</span>
+                    <span className="detail-value">
+                      {detailPanelUser.fname} {detailPanelUser.lname}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Email:</span>
+                    <span className="detail-value">
+                      {detailPanelUser.email}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Username:</span>
+                    <span className="detail-value">
+                      {detailPanelUser.username}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Age:</span>
+                    <span className="detail-value">{detailPanelUser.age}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Phone:</span>
+                    <span className="detail-value">
+                      {detailPanelUser.phone}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Address:</span>
+                    <span className="detail-value">
+                      {detailPanelUser.address}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">State:</span>
+                    <span className="detail-value">
+                      {detailPanelUser.state}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Role:</span>
+                    <span className="detail-value detail-badge">
+                      {detailPanelUser.role}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Subscribed:</span>
+                    <span className="detail-value">
+                      {detailPanelUser.is_subscribed ? "Yes" : "No"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Borrowed Books Section */}
+              <div className="detail-section">
+                <h3>Borrowed Books ({borrowedBooks.length})</h3>
+                {loadingBooks ? (
+                  <p className="detail-loading">Loading books...</p>
+                ) : borrowedBooks.length === 0 ? (
+                  <p className="detail-empty">No borrowed books</p>
+                ) : (
+                  <div className="borrowed-books-list">
+                    {borrowedBooks.map((book) => (
+                      <div key={book.copy_id} className="borrowed-book-item">
+                        <div className="book-cover">
+                          {book.poster ? (
+                            <img src={book.poster} alt={book.title} />
+                          ) : (
+                            <div className="book-cover-placeholder">
+                              {book.title[0]}
+                            </div>
+                          )}
+                        </div>
+                        <div className="book-info">
+                          <p className="book-title">{book.title}</p>
+                          <p className="book-detail">
+                            <strong>Theme:</strong> {book.theme}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Publisher:</strong> {book.publisher}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Location:</strong> {book.location}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Borrowed:</strong>{" "}
+                            {new Date(book.borrowed_date).toLocaleDateString()}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Due:</strong>{" "}
+                            {new Date(book.due_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Dialog */}
       {openDialog && (
         <div className="dialog-overlay">

@@ -6,19 +6,29 @@ import ExplorePage from "./pages/explorePage";
 import DashboardPage from "./pages/DashboardPage";
 import Mybooks from "./pages/MybooksPage";
 import ProfilePage from "./pages/ProfilePage";
-import UsersPage from "./pages/UsersPage";
+//comps imports
+import BooksManagement from "./components/BooksManagement";
+import AddBookForm from "./components/AddBookForm";
+import UsersList from "./components/UsersList";
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<AuthPage />} />
-        <Route path="/explore" element={<Layout />}>
-          <Route index element={<ExplorePage />} />
-          <Route path="mybooks" element={<Mybooks />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="userslist" element={<UsersPage />} />
+
+        <Route path="/" element={<Layout />}>
+          <Route path="explore" element={<ExplorePage />} />
+          <Route path="explore/mybooks" element={<Mybooks />} />
+
+          <Route path="dashboard" element={<DashboardPage />}>
+            <Route path="booksmanagments" element={<BooksManagement />} />
+            <Route path="addbook" element={<AddBookForm />} />
+            <Route path="userslist" element={<UsersList />} />
+          </Route>
+
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
-        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </BrowserRouter>
   );

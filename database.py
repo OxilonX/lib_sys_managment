@@ -50,7 +50,7 @@ def init_db():
     """
     )
 
-    # book copies
+    # book copies table
     cur.execute(
         """
     CREATE TABLE IF NOT EXISTS book_copies (
@@ -62,6 +62,7 @@ def init_db():
         borrowed_by INTEGER,
         borrowed_date TIMESTAMP,
         due_date TIMESTAMP,
+        state INTEGER DEFAULT 100,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
         FOREIGN KEY (publisher_id) REFERENCES publishers(id),
