@@ -8,7 +8,7 @@ body{
 }
 section{
     background: var(--background-color);
-    margin:  0 ;
+    margin:  0 !important;
 }
 .layout-content{
    background-color:var(--background-color) 

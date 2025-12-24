@@ -108,10 +108,8 @@ export default function MyBooks() {
   return (
     <Container maxWidth="lg" className="mybooks-page" sx={{ padding: 0 }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-        <HistoryIcon color="" sx={{ fontSize: 40 }} />
-        <Typography variant="h4" fontWeight="bold">
-          My Borrowed Books
-        </Typography>
+        <HistoryIcon color="" sx={{ fontSize: 38, mt: 0.5 }} />
+        <h1 className="mb-title">My Borrowed Books</h1>
       </Box>
 
       {error && (

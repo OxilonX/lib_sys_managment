@@ -17,14 +17,11 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Tabs,
-  Tab,
   InputAdornment,
 } from "@mui/material";
 import {
   Explore as ExploreIcon,
   Dashboard as DashboardIcon,
-  People as PeopleIcon,
   Book as BookIcon,
   Menu as MenuIcon,
   Logout as LogoutIcon,
@@ -47,7 +44,6 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isExplorePage = location.pathname.includes("/explore");
-  const isDashboardPage = location.pathname.includes("/dashboard");
 
   const menuItems = [
     { label: "Explore", icon: <ExploreIcon />, path: "/explore" },
@@ -60,32 +56,23 @@ export default function Layout() {
           },
         ]
       : []),
-
     { label: "My Books", icon: <BookIcon />, path: "/explore/mybooks" },
   ];
 
-  const dashboardTabs = [
-    { label: "Books Management", path: "/dashboard/booksmanagments" },
-    { label: "Add New Book", path: "/dashboard/addbook" },
-    { label: "Users Management", path: "/dashboard/userslist" },
-  ];
-
-  const getActiveTab = () => {
-    const index = dashboardTabs.findIndex(
-      (tab) => location.pathname === tab.path
-    );
-    return index === -1 ? 0 : index;
-  };
+  const handleProfileMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleProfileMenuClose = () => setAnchorEl(null);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <AppBar position="sticky" elevation={0} className="layout-appbar">
         <Toolbar className="layout-toolbar">
+          {/* LEFT: Logo */}
           <Box className="layout-left-section">
             <img
               src={logo}
               alt="Librix"
               className="layout-logo"
+              style={{ cursor: "pointer" }}
               onClick={() => navigate("/explore")}
             />
           </Box>
@@ -93,32 +80,39 @@ export default function Layout() {
           {/* CENTER: Navigation (Desktop) */}
           {!isMobile && (
             <Box className="layout-center-section">
-              {isDashboardPage ? (
-                <Tabs
-                  value={getActiveTab()}
-                  onChange={(e, v) => navigate(dashboardTabs[v].path)}
-                  className="layout-tabs"
-                >
-                  {dashboardTabs.map((tab) => (
-                    <Tab key={tab.path} label={tab.label} />
-                  ))}
-                </Tabs>
-              ) : (
-                <Box className="layout-nav-links">
-                  {menuItems.map((item) => (
+              <Box className="layout-nav-links">
+                {menuItems.map((item) => {
+                  // LOGIC FIX:
+                  // 1. Exact match for specific routes (Explore vs My Books)
+                  const isExact = location.pathname === item.path;
+                  // 2. Parent match for Dashboard (so it stays active on sub-pages)
+                  const isDashboardActive =
+                    item.label === "Dashboard" &&
+                    location.pathname.startsWith("/dashboard");
+
+                  const isActive = isExact || isDashboardActive;
+
+                  return (
                     <Button
                       key={item.label}
                       onClick={() => navigate(item.path)}
-                      className={`nav-btn ${
-                        location.pathname === item.path ? "active" : ""
-                      }`}
                       startIcon={item.icon}
+                      className={`nav-btn ${isActive ? "active" : ""}`}
+                      sx={
+                        isActive
+                          ? {
+                              borderBottom: "2px solid",
+                              borderRadius: 0,
+                              backgroundColor: "rgba(255, 255, 255, 0.1)",
+                            }
+                          : {}
+                      }
                     >
                       {item.label}
                     </Button>
-                  ))}
-                </Box>
-              )}
+                  );
+                })}
+              </Box>
             </Box>
           )}
 
@@ -142,31 +136,34 @@ export default function Layout() {
             )}
 
             {isMobile && (
-              <IconButton onClick={() => setMobileOpen(true)} sx={{ mr: 1 }}>
+              <IconButton
+                onClick={() => setMobileOpen(true)}
+                sx={{ mr: 1, color: "inherit" }}
+              >
                 <MenuIcon />
               </IconButton>
             )}
 
             <Avatar
-              onClick={(e) => setAnchorEl(e.currentTarget)}
+              onClick={handleProfileMenuOpen}
               className="layout-avatar"
+              sx={{ cursor: "pointer", bgcolor: theme.palette.secondary.main }}
             >
               {currUser?.user?.username?.charAt(0).toUpperCase() || "U"}
             </Avatar>
           </Box>
 
-          {/* Profile Menu */}
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
-            onClose={() => setAnchorEl(null)}
+            onClose={handleProfileMenuClose}
             transformOrigin={{ horizontal: "right", vertical: "top" }}
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
             <MenuItem
               onClick={() => {
                 navigate("/profile");
-                setAnchorEl(null);
+                handleProfileMenuClose();
               }}
             >
               <ListItemIcon>
@@ -177,7 +174,7 @@ export default function Layout() {
             <MenuItem
               onClick={() => {
                 navigate("/login");
-                setAnchorEl(null);
+                handleProfileMenuClose();
               }}
             >
               <ListItemIcon>
@@ -197,23 +194,30 @@ export default function Layout() {
       >
         <Box sx={{ width: 250, p: 2 }}>
           <List>
-            {(isDashboardPage ? dashboardTabs : menuItems).map((item) => (
-              <ListItem
-                button
-                key={item.label}
-                onClick={() => {
-                  navigate(item.path);
-                  setMobileOpen(false);
-                }}
-              >
-                <ListItemText primary={item.label} />
-              </ListItem>
-            ))}
+            {menuItems.map((item) => {
+              const isActive =
+                location.pathname === item.path ||
+                (item.label === "Dashboard" &&
+                  location.pathname.startsWith("/dashboard"));
+              return (
+                <ListItem
+                  button
+                  key={item.label}
+                  selected={isActive}
+                  onClick={() => {
+                    navigate(item.path);
+                    setMobileOpen(false);
+                  }}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} />
+                </ListItem>
+              );
+            })}
           </List>
         </Box>
       </Drawer>
 
-      {/* Main Content */}
       <main className="layout-content">
         <Outlet />
       </main>

@@ -8,6 +8,7 @@ import {
   Favorite as SubscribersIcon,
   Check as AvailableIcon,
   Schedule as BorrowedIcon,
+  SpaceDashboard as SpaceDashboardIcon,
 } from "@mui/icons-material";
 import "../styles/dashboardpg.css";
 
@@ -44,7 +45,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/books");
       const data = await response.json();
       setBooks(data);
-    }  finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -105,10 +106,23 @@ export default function DashboardPage() {
 
   return (
     <section className="dashboard-page">
-      <Container maxWidth="lg" className="dashboard-container">
+      <Container
+        maxWidth="lg"
+        sx={{ mt: 0, pt: 0 }}
+        className="dashboard-container"
+      >
         {/* Header */}
         <Box className="dashboard-header">
-          <h1 className="dashboard-title">Dashboard</h1>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <SpaceDashboardIcon sx={{ fontSize: 38, mt: 0.5 }} />
+            <h1 className="dashboard-title">Dashboard</h1>
+          </div>
 
           {/* Statistics Grid */}
           <Grid container spacing={3} className="dashboard-stats-grid">
