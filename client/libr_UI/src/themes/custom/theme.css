@@ -1,6 +1,6 @@
 :root {
   /* ----- Core Colors (Light Theme) ----- */
-  --background-color: #fcfcfc;       /* Main background: very light gray */
+  --background-color: linear-gradient(135deg, #f5f7fa 0%, #f8f9fb 100%);       /* Main background: very light gray */
   --background-secondary: #e0e0e0;   /* Slightly darker panel/background */
   --background-tertiary: #cfcfcf;    /* Even darker gray for sections/cards */  --surface-color: #efefef;          /* Slightly darker panels */
   --text-color: #1a1a1a;             /* Dark text for readability */

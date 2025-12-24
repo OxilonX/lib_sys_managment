@@ -1,7 +1,5 @@
 
-:root{
-    --focus-ring: black;
-}
+
 body{
     box-sizing: border-box;
     margin: 0;
@@ -11,4 +9,7 @@ body{
 section{
     background: var(--background-color);
     margin:  0 ;
+}
+.layout-content{
+   background-color:var(--background-color) 
 }
