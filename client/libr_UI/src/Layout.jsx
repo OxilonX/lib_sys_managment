@@ -34,7 +34,7 @@ import logo from "./assets/icons/librix-logo.png";
 import "./styles/layout.css";
 
 export default function Layout() {
-  const { currUser } = useUsersData();
+  const { currUser, logoutUser } = useUsersData();
   const { searchQuery, setSearchQuery } = useBooksData();
   const location = useLocation();
   const navigate = useNavigate();
@@ -77,15 +77,12 @@ export default function Layout() {
             />
           </Box>
 
-          {/* CENTER: Navigation (Desktop) */}
           {!isMobile && (
             <Box className="layout-center-section">
               <Box className="layout-nav-links">
                 {menuItems.map((item) => {
-                  // LOGIC FIX:
-                  // 1. Exact match for specific routes (Explore vs My Books)
                   const isExact = location.pathname === item.path;
-                  // 2. Parent match for Dashboard (so it stays active on sub-pages)
+
                   const isDashboardActive =
                     item.label === "Dashboard" &&
                     location.pathname.startsWith("/dashboard");
@@ -173,6 +170,7 @@ export default function Layout() {
             </MenuItem>
             <MenuItem
               onClick={() => {
+                logoutUser();
                 navigate("/login");
                 handleProfileMenuClose();
               }}

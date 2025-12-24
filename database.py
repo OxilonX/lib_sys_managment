@@ -143,7 +143,22 @@ def init_db():
     );
     """
     )
-
+    # Requests table
+    cur.execute(
+        """
+    CREATE TABLE IF NOT EXISTS book_requests (
+        request_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        copy_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        requested_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        position INTEGER NOT NULL,
+        status TEXT DEFAULT 'waiting',
+        FOREIGN KEY (copy_id) REFERENCES book_copies(copy_id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        UNIQUE(copy_id, user_id)
+    );
+    """
+    )
     # cur.execute("DELETE FROM book_copies WHERE book_id = 2")
     conn.commit()
     conn.close()

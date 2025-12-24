@@ -5,7 +5,19 @@ const UsersContext = createContext(null);
 export function UsersProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [userLoading, setUserLoading] = useState(false);
-  const [currUser, setCurrUser] = useState({ success: false, user: {} });
+
+  const [currUser, setCurrUser] = useState(() => {
+    const savedUser = localStorage.getItem("librix_currUser");
+    return savedUser ? JSON.parse(savedUser) : { success: false, user: {} };
+  });
+
+  useEffect(() => {
+    if (currUser && currUser.success) {
+      localStorage.setItem("librix_currUser", JSON.stringify(currUser));
+    } else {
+      localStorage.removeItem("librix_currUser");
+    }
+  }, [currUser]);
 
   async function addUser(userData) {
     setUserLoading(true);
@@ -40,9 +52,11 @@ export function UsersProvider({ children }) {
       setUserLoading(false);
     }
   }
+
   useEffect(() => {
     fetchUsers();
   }, []);
+
   async function loginUser(userData) {
     setUserLoading(true);
     try {
@@ -57,15 +71,21 @@ export function UsersProvider({ children }) {
       const data = await res.json();
 
       if (!data.success) {
-        setCurrUser({ success: false });
+        setCurrUser({ success: false, user: {} });
         return data;
       }
+
       setCurrUser({ success: true, user: data.user });
       return data;
     } finally {
       setUserLoading(false);
     }
   }
+
+  const logoutUser = () => {
+    setCurrUser({ success: false, user: {} });
+  };
+
   const userValue = {
     users,
     userLoading,
@@ -73,6 +93,7 @@ export function UsersProvider({ children }) {
     fetchUsers,
     addUser,
     loginUser,
+    logoutUser,
     setCurrUser,
   };
 

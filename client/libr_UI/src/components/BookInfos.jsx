@@ -1,7 +1,5 @@
-//Styles imports
 import "./compStyles/bookinfos.css";
 import { useState, useEffect } from "react";
-//MUI import comps and icons
 import {
   Dialog,
   DialogContent,
@@ -31,9 +29,11 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [borrowSuccess, setBorrowSuccess] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState(false);
+  const [userBorrowedBooks, setUserBorrowedBooks] = useState([]);
+
   if (!book) return null;
 
-  // Fetch copies when component mounts or book changes
   const fetchCopies = async () => {
     try {
       setLoading(true);
@@ -54,9 +54,30 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
       setLoading(false);
     }
   };
+
+  const fetchUserBorrowedBooks = async () => {
+    try {
+      const response = await fetch(
+        `/api/users/${currUser?.user?.user_id}/borrowed`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch borrowed books");
+      }
+      const data = await response.json();
+      setUserBorrowedBooks(data.map((b) => b.copy_id));
+    } catch (err) {
+      console.log("Error fetching borrowed books:", err);
+    }
+  };
+
   useEffect(() => {
     fetchCopies();
-  }, [book.id]);
+    fetchUserBorrowedBooks();
+  }, [book.id, currUser?.user?.user_id]);
+
+  const selectedCopyData = copies.find((c) => c.copy_id === selectedCopy);
+  const isBorrowed = selectedCopyData?.is_available === 0;
+  const isUserBorrowedCopy = userBorrowedBooks.includes(selectedCopy);
 
   const handleBorrow = async () => {
     if (!selectedCopy) {
@@ -64,7 +85,7 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
       return;
     }
     if (!currUser?.user?.is_subscribed) {
-      setError("You need to be a Subscriber to borrow books ");
+      setError("You need to be a Subscriber to borrow books");
       return;
     }
 
@@ -96,7 +117,55 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
       }, 1000);
     } catch (err) {
       setError(err.message);
-      console.log(selectedCopy);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequest = async () => {
+    if (!selectedCopy) {
+      setError("Please select a copy");
+      return;
+    }
+    if (!currUser?.user?.is_subscribed) {
+      setError("You need to be a Subscriber to request books");
+      return;
+    }
+    if (isUserBorrowedCopy) {
+      setError("You cannot request a book you already borrowed");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/books/copies/${selectedCopy}/request`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: currUser?.user?.user_id,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to request book");
+      }
+
+      const data = await response.json();
+      setRequestSuccess(true);
+      setError(null);
+      setTimeout(() => {
+        setCloseDialog(false);
+      }, 1500);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -229,11 +298,10 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
                     key={copy.copy_id}
                     onClick={() => setSelectedCopy(copy.copy_id)}
                     sx={{
-                      cursor:
-                        copy.is_available === 1 ? "pointer" : "not-allowed",
+                      cursor: "pointer",
                       textAlign: "center",
                       transition: "all 0.2s ease",
-                      opacity: copy.is_available === 1 ? 1 : 0.5,
+                      opacity: 1,
                     }}
                   >
                     {/* Copy Poster */}
@@ -247,17 +315,13 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
                         overflow: "hidden",
                         border:
                           selectedCopy === copy.copy_id
-                            ? "3px solid #1976d2"
+                            ? "3px solid #5eb3f6"
                             : "2px solid #e0e0e0",
                         backgroundColor: "#f5f5f5",
                         transition: "all 0.2s ease",
                         "&:hover": {
-                          border:
-                            copy.is_available === 1
-                              ? "3px solid #1976d2"
-                              : "2px solid #e0e0e0",
-                          transform:
-                            copy.is_available === 1 ? "scale(1.05)" : "none",
+                          border: "3px solid #5eb3f6",
+                          transform: "scale(1.05)",
                         },
                       }}
                     >
@@ -265,39 +329,47 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
                         component="img"
                         src={book.poster}
                         alt={`Copy ${copy.copy_id}`}
-                        sx={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
+                        sx={
+                          copy.is_available === 1
+                            ? {
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }
+                            : {
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                filter: "brightness(60%)",
+                              }
+                        }
                       />
 
                       {/* Selected Checkmark */}
                       {selectedCopy === copy.copy_id && (
                         <Box
-                          sx={
-                            copy.is_available === 1
-                              ? {
-                                  position: "absolute",
-                                  top: "50%",
-                                  left: "50%",
-                                  transform: "translate(-50%, -50%)",
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: "50%",
-                                  backgroundColor: "#1976d2",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: "white",
-                                  fontSize: "1.5rem",
-                                  fontWeight: "bold",
-                                }
-                              : { display: "none" }
-                          }
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            width: 40,
+                            height: 40,
+                            borderRadius: "50%",
+                            backgroundColor: "#5eb3f6",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "white",
+                            fontSize: "1.5rem",
+                            fontWeight: "bold",
+                          }}
                         >
                           ✓
                         </Box>
@@ -324,7 +396,14 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
                     </Box>
 
                     {/* Location and Publisher Info */}
-                    <Box sx={{ textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "start",
+                        textAlign: "center",
+                      }}
+                    >
                       <Box
                         sx={{
                           display: "flex",
@@ -334,50 +413,87 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
                           mb: 0.5,
                         }}
                       >
-                        <LocationOnIcon sx={{ fontSize: "0.9rem" }} />
-                        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                        <PersonIcon sx={{ fontSize: "0.7rem" }} />
+                        <Typography
+                          sx={{ fontSize: 10 }}
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          {copy.publisher.length > 20
+                            ? copy.publisher.substring(0, 20) + "..."
+                            : copy.publisher}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 0.5,
+                          mb: 0.1,
+                        }}
+                      >
+                        <LocationOnIcon sx={{ fontSize: "0.7rem" }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 500, fontSize: 10 }}
+                        >
                           {copy.location.length > 15
                             ? copy.location.substring(0, 15) + "..."
                             : copy.location}
                         </Typography>
                       </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {copy.publisher.length > 20
-                          ? copy.publisher.substring(0, 20) + "..."
-                          : copy.publisher}
-                      </Typography>
                     </Box>
                   </Box>
                 ))}
               </Box>
             )}
           </Paper>
+
           {borrowSuccess && (
             <Alert severity="success">
               Book borrowed successfully! Due date: 15 days from now
             </Alert>
           )}
 
+          {requestSuccess && (
+            <Alert severity="success">
+              Request submitted successfully! You'll be notified when the book
+              is available.
+            </Alert>
+          )}
+
           {error && <Alert severity="error">{error}</Alert>}
+
           {/* Action Buttons */}
           <Stack direction="row" spacing={1.5} sx={{ mt: 2 }}>
             <Button
               variant="contained"
               fullWidth
-              onClick={handleBorrow}
-              disabled={
-                loading ||
-                !selectedCopy ||
-                copies.find((c) => c.copy_id === selectedCopy)?.is_available ===
-                  0
-              }
+              onClick={isBorrowed ? handleRequest : handleBorrow}
+              disabled={loading || !selectedCopy || isUserBorrowedCopy}
               sx={{
                 textTransform: "none",
                 fontWeight: 600,
                 py: 1.2,
+                background: isBorrowed
+                  ? "linear-gradient(135deg, #ab47bc 0%, #9c27b0 100%)"
+                  : "linear-gradient(135deg, #5eb3f6 0%, #5399e8 100%)",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                },
+                "&:disabled": {
+                  opacity: 0.6,
+                },
               }}
             >
-              {loading ? "Borrowing..." : "Borrow Book"}
+              {loading
+                ? isBorrowed
+                  ? "Requesting..."
+                  : "Borrowing..."
+                : isBorrowed
+                ? "Request Book"
+                : "Borrow Book"}
             </Button>
             <Button
               variant="outlined"
@@ -387,8 +503,11 @@ export default function BookInfos({ book, setCloseDialog, currUser }) {
                 fontWeight: 600,
                 py: 1.2,
               }}
+              onClick={() => {
+                setCloseDialog(false);
+              }}
             >
-              Add to Favorites
+              Go back
             </Button>
           </Stack>
         </Box>

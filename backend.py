@@ -317,7 +317,7 @@ def borrow_book_copy(copy_id):
 
 @app.route("/api/books/copies/<int:copy_id>/return", methods=["POST"])
 def return_book_copy(copy_id):
-    """Return a borrowed book copy"""
+    """Return a borrowed book copy and notify next in queue"""
     db = get_db()
     cursor = db.cursor()
 
@@ -333,7 +333,19 @@ def return_book_copy(copy_id):
         if copy["is_available"] == 1:
             return jsonify({"error": "Copy is not borrowed"}), 400
 
-        # Update copy - mark as available
+        # Get first person in request queue
+        cursor.execute(
+            """
+            SELECT request_id, user_id FROM book_requests 
+            WHERE copy_id = ? AND status = 'waiting'
+            ORDER BY position ASC
+            LIMIT 1
+            """,
+            (copy_id,),
+        )
+        next_request = cursor.fetchone()
+
+        # Return the book
         cursor.execute(
             """
             UPDATE book_copies 
@@ -343,10 +355,33 @@ def return_book_copy(copy_id):
             (copy_id,),
         )
 
+        # If someone is waiting, move them to ready status and decrement other positions
+        if next_request:
+            cursor.execute(
+                "UPDATE book_requests SET status = 'ready' WHERE request_id = ?",
+                (next_request["request_id"],),
+            )
+
+            # Decrement positions for remaining requests
+            cursor.execute(
+                """
+                UPDATE book_requests 
+                SET position = position - 1 
+                WHERE copy_id = ? AND status = 'waiting'
+                """,
+                (copy_id,),
+            )
+
         db.commit()
 
         return (
-            jsonify({"message": "Book returned successfully", "copy_id": copy_id}),
+            jsonify(
+                {
+                    "message": "Book returned successfully",
+                    "copy_id": copy_id,
+                    "next_user": next_request["user_id"] if next_request else None,
+                }
+            ),
             200,
         )
 
@@ -380,6 +415,188 @@ def get_books():
     return jsonify(books), 200
 
 
+# requests functions
+
+
+@app.route("/api/books/copies/<int:copy_id>/request", methods=["POST"])
+def request_book_copy(copy_id):
+    """Request a book copy that is currently borrowed"""
+    db = get_db()
+    cursor = db.cursor()
+    data = request.json
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    try:
+        # Check if copy exists
+        cursor.execute(
+            "SELECT is_available FROM book_copies WHERE copy_id = ?", (copy_id,)
+        )
+        copy = cursor.fetchone()
+
+        if not copy:
+            return jsonify({"error": "Copy not found"}), 404
+
+        if copy["is_available"] == 1:
+            return (
+                jsonify({"error": "Copy is available, you can borrow it directly"}),
+                400,
+            )
+
+        # Check if user already requested this copy
+        cursor.execute(
+            "SELECT request_id FROM book_requests WHERE copy_id = ? AND user_id = ?",
+            (copy_id, user_id),
+        )
+        if cursor.fetchone():
+            return jsonify({"error": "You already requested this copy"}), 409
+
+        # Get position in queue (count existing requests + 1)
+        cursor.execute(
+            "SELECT COUNT(*) as count FROM book_requests WHERE copy_id = ?", (copy_id,)
+        )
+        position = cursor.fetchone()["count"] + 1
+
+        # Create request
+        cursor.execute(
+            """
+            INSERT INTO book_requests (copy_id, user_id, position, status)
+            VALUES (?, ?, ?, 'waiting')
+            """,
+            (copy_id, user_id, position),
+        )
+
+        db.commit()
+        request_id = cursor.lastrowid
+
+        return (
+            jsonify(
+                {
+                    "message": "Request created successfully",
+                    "request_id": request_id,
+                    "position": position,
+                }
+            ),
+            201,
+        )
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
+@app.route("/api/users/<int:user_id>/requests", methods=["GET"])
+def get_user_requests(user_id):
+    """Get all book requests for a user"""
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT 
+                br.request_id,
+                br.copy_id,
+                br.position,
+                br.status,
+                br.requested_date,
+                b.title,
+                b.poster,
+                p.name as publisher,
+                bc.location
+            FROM book_requests br
+            JOIN book_copies bc ON br.copy_id = bc.copy_id
+            JOIN books b ON bc.book_id = b.id
+            LEFT JOIN publishers p ON bc.publisher_id = p.id
+            WHERE br.user_id = ?
+            ORDER BY br.status DESC, br.position ASC
+            """,
+            (user_id,),
+        )
+
+        requests = [dict(row) for row in cursor.fetchall()]
+        return jsonify(requests), 200
+
+    except Exception as e:
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
+@app.route("/api/books/copies/<int:copy_id>/requests", methods=["GET"])
+def get_copy_requests(copy_id):
+    """Get request queue for a specific copy"""
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT 
+                br.request_id,
+                br.user_id,
+                br.position,
+                br.requested_date,
+                u.fname,
+                u.lname,
+                u.email
+            FROM book_requests br
+            JOIN users u ON br.user_id = u.user_id
+            WHERE br.copy_id = ?
+            ORDER BY br.position ASC
+            """,
+            (copy_id,),
+        )
+
+        queue = [dict(row) for row in cursor.fetchall()]
+        return jsonify(queue), 200
+
+    except Exception as e:
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
+@app.route("/api/books/requests/<int:request_id>/cancel", methods=["POST"])
+def cancel_book_request(request_id):
+    """Cancel a book request"""
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        cursor.execute(
+            "SELECT copy_id, position FROM book_requests WHERE request_id = ?",
+            (request_id,),
+        )
+        request = cursor.fetchone()
+
+        if not request:
+            return jsonify({"error": "Request not found"}), 404
+
+        copy_id = request["copy_id"]
+        position = request["position"]
+
+        # Delete request
+        cursor.execute("DELETE FROM book_requests WHERE request_id = ?", (request_id,))
+
+        # Decrement positions for requests after this one
+        cursor.execute(
+            """
+            UPDATE book_requests 
+            SET position = position - 1 
+            WHERE copy_id = ? AND position > ?
+            """,
+            (copy_id, position),
+        )
+
+        db.commit()
+
+        return jsonify({"message": "Request cancelled successfully"}), 200
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
+# users manipulation functions
 @app.route("/api/users", methods=["GET"])
 def get_users():
     conn = get_db()
