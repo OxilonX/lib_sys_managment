@@ -248,17 +248,32 @@ export default function AddBookForm() {
             <h2 className="abf-section-title">Authors & Keywords</h2>
 
             <Stack spacing={2} className="abf-section-content">
-              <Box className="abf-grid-2">
-                <ChipInput
-                  label="Authors"
-                  value={bookInputVal.authors}
-                  onChange={handleAuthorsChange}
-                />
-                <ChipInput
-                  label="Keywords"
-                  value={bookInputVal.keywords}
-                  onChange={handleKeywordsChange}
-                />
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr", 
+                  gap: 2,
+                  width: "100%",
+                  alignItems: "start",
+                }}
+              >
+               
+                <Box>
+                  <ChipInput
+                    label="Authors"
+                    value={bookInputVal.authors}
+                    onChange={handleAuthorsChange}
+                    fullWidth
+                  />
+                </Box>
+                <Box>
+                  <ChipInput
+                    label="Keywords"
+                    value={bookInputVal.keywords}
+                    onChange={handleKeywordsChange}
+                    fullWidth
+                  />
+                </Box>
               </Box>
             </Stack>
           </Paper>

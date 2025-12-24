@@ -192,6 +192,7 @@ export default function BooksManagement() {
                   }`}
                 >
                   <AccordionSummary
+                    component="div"
                     expandIcon={<ExpandMoreIcon />}
                     className="bm-accordion-summary"
                   >

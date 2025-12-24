@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import { Alert } from "@mui/material";
 import { useUsersData } from "../contexts/userDataContext";
 import "../styles/explorePage.css";
 import BookInfos from "../components/BookInfos";
 //bookContext import
 import { useBooksData } from "../contexts/booksDataContext";
-
+//MUI icons imports
+import ExploreIcon from "@mui/icons-material/Explore";
 export default function ExplorePage() {
   const { currUser, setCurrUser } = useUsersData();
   const { searchQuery } = useBooksData();
@@ -73,7 +76,12 @@ export default function ExplorePage() {
       ) : (
         <>
           <Container maxWidth="lg">
-            <h1 className="explore-heading">Explore Our Catalogue</h1>
+            <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
+              <ExploreIcon color="" sx={{ fontSize: 40 }} />
+              <Typography variant="h4" fontWeight="bold">
+                Explore our Catalogue
+              </Typography>
+            </Box>{" "}
             <div className="books-container">
               <div className="books-grid">
                 {books

@@ -106,9 +106,9 @@ export default function MyBooks() {
   }
 
   return (
-    <Container maxWidth="lg" className="mybooks-page">
+    <Container maxWidth="lg" className="mybooks-page" sx={{ padding: 0 }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-        <HistoryIcon color="primary" sx={{ fontSize: 32 }} />
+        <HistoryIcon color="" sx={{ fontSize: 40 }} />
         <Typography variant="h4" fontWeight="bold">
           My Borrowed Books
         </Typography>
