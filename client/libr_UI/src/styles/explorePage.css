@@ -18,9 +18,9 @@
 .books-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: 250px;
-  gap: 40px 20px;
+grid-auto-rows: min-content;  gap: 40px 20px;
   width: 100%;
+  align-items: start;
 }
 
 .book-card {

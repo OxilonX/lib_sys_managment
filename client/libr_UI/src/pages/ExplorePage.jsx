@@ -6,6 +6,10 @@ import {
   Box,
   Alert,
   CircularProgress,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { useUsersData } from "../contexts/userDataContext";
 import { useBooksData } from "../contexts/booksDataContext";
@@ -23,21 +27,20 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 1. CLEAR MANUAL MAPPING (No more random math)
+  const [filterType, setFilterType] = useState("all");
+
   const getThemeColor = (theme) => {
     const lowerTheme = theme?.toLowerCase() || "";
-
     const themeMap = {
-      mystery: "#FF5252", // Red
-      fantasy: "#9C27B0", // Purple
-      history: "#FF9800", // Orange
-      science: "#4CAF50", // Green
-      romance: "#E91E63", // Pink
-      thriller: "#000000", // Black
-      biography: "#795548", // Brown
-      programming: "#448AFF", // Blue
+      mystery: "#FF5252",
+      fantasy: "#9C27B0",
+      history: "#FF9800",
+      science: "#4CAF50",
+      romance: "#E91E63",
+      thriller: "#000000",
+      biography: "#795548",
+      programming: "#448AFF",
     };
-
     return themeMap[lowerTheme] || "#1976d2";
   };
 
@@ -64,6 +67,7 @@ export default function ExplorePage() {
         <CircularProgress />
       </Box>
     );
+
   if (error)
     return (
       <Container sx={{ mt: 4 }}>
@@ -74,31 +78,60 @@ export default function ExplorePage() {
   return (
     <section id="explore-page">
       <Container maxWidth="lg" sx={{ pb: 4, pt: 0, mt: 0 }}>
+        {/* Header and Filter Controls */}
         <Box
           sx={{
             mb: 4,
             display: "flex",
-            alignItems: "center",
-
+            flexDirection: { xs: "column", sm: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", sm: "center" },
             gap: 2,
           }}
         >
-          <ExploreIcon sx={{ fontSize: 38, mt: 0.5 }} />
-          <h1 className="ep-title" fontWeight="bold">
-            Explore our Catalogue
-          </h1>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <ExploreIcon sx={{ fontSize: 38, mt: 0.5 }} />
+            <h1 className="ep-title">Explore our Catalogue</h1>
+          </Box>
+
+          {/* New Search Category Filter */}
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel id="search-filter-label">Search By</InputLabel>
+            <Select
+              labelId="search-filter-label"
+              value={filterType}
+              label="Search By"
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <MenuItem value="all">All Fields</MenuItem>
+              <MenuItem value="title">Title</MenuItem>
+              <MenuItem value="theme">Theme</MenuItem>
+              <MenuItem value="publisher">Publisher</MenuItem>
+              <MenuItem value="keywords">Keywords</MenuItem>
+              <MenuItem value="catCode">Catalog Code</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
 
+        {/* Books Grid */}
         <div className="books-grid">
           {books
             .filter((book) => {
               const query = searchQuery.toLowerCase();
-              return (
-                book.title.toLowerCase().includes(query) ||
-                (book.publisher &&
-                  book.publisher.toLowerCase().includes(query)) ||
-                (book.theme && book.theme.toLowerCase().includes(query))
-              );
+              if (!query) return true;
+
+              const matches = {
+                title: book.title?.toLowerCase().includes(query),
+                publisher: book.publisher?.toLowerCase().includes(query),
+                theme: book.theme?.toLowerCase().includes(query),
+                keywords: book.keywords?.toLowerCase().includes(query),
+                catCode: book.catalog_code?.toLowerCase().includes(query),
+              };
+
+              if (filterType === "all") {
+                return Object.values(matches).some(Boolean);
+              }
+              return matches[filterType];
             })
             .map((book) => {
               const themeColor = getThemeColor(book.theme);
@@ -126,20 +159,11 @@ export default function ExplorePage() {
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
-                        marginTop: 0.2,
+                        mt: 0.2,
                       }}
                     >
                       <PersonIcon sx={{ fontSize: 11, opacity: 0.6 }} />
-                      <p
-                        style={{
-                          opacity: 0.8,
-                          fontSize: "0.65rem",
-                          padding: "0",
-                          margin: "0",
-                        }}
-                      >
-                        {book.publisher}
-                      </p>
+                      <p className="book-author">{book.publisher}</p>
                     </Box>
                     <Chip
                       label={book.theme || "General"}
@@ -153,10 +177,6 @@ export default function ExplorePage() {
                         textTransform: "uppercase",
                         backgroundColor: `${themeColor}15`,
                         color: themeColor,
-                        "& .MuiChip-label": {
-                          color: "inherit",
-                          px: 1,
-                        },
                       }}
                     />
                   </div>

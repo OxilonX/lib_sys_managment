@@ -38,7 +38,7 @@ def add_new_book():
     theme = data.get("theme")
     catCode = data.get("catCode")
     authors = data.get("authors")
-    publisher = data.get("publisher")  # Now a single publisher string
+    publisher = data.get("publisher")
     keywords = data.get("keywords")
 
     if not all([title, catCode, location, theme, authors, poster, publisher]):
@@ -55,7 +55,6 @@ def add_new_book():
         theme_id = get_or_create_id("themes", theme, "name")
         publisher_id = get_or_create_id("publishers", publisher, "name")
 
-        # Create the book with its publisher
         cursor.execute(
             """
             INSERT INTO books (catalog_code, title, theme_id, publisher_id, poster)
@@ -65,11 +64,9 @@ def add_new_book():
         )
         book_id = cursor.lastrowid
 
-        # Add authors and keywords
         insert_book_authors(book_id, authors)
         insert_book_keywords(book_id, keywords)
 
-        # Create first copy with the same publisher and location
         cursor.execute(
             """
             INSERT INTO book_copies (book_id, location, publisher_id, is_available)
@@ -100,6 +97,40 @@ def add_new_book():
             ),
             500,
         )
+
+
+@app.route("/api/books/<int:book_id>/delete", methods=["DELETE"])
+def delete_book(book_id):
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        cursor.execute(
+            "SELECT COUNT(*) as borrowed_count FROM book_copies WHERE book_id = ? AND is_available = 0",
+            (book_id,),
+        )
+        borrowed = cursor.fetchone()["borrowed_count"]
+
+        cursor.execute("DELETE FROM book_authors WHERE book_id = ?", (book_id,))
+        cursor.execute("DELETE FROM book_keywords WHERE book_id = ?", (book_id,))
+        cursor.execute(
+            "DELETE FROM book_requests WHERE copy_id IN (SELECT copy_id FROM book_copies WHERE book_id = ?)",
+            (book_id,),
+        )
+        cursor.execute("DELETE FROM book_copies WHERE book_id = ?", (book_id,))
+        cursor.execute("DELETE FROM books WHERE id = ?", (book_id,))
+
+        db.commit()
+
+        msg = f"Book deleted."
+        if borrowed > 0:
+            msg += f" Warning: {borrowed} borrowed copies were forcefully removed."
+
+        return jsonify({"message": msg}), 200
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/books/<int:book_id>/copies", methods=["GET"])
@@ -423,13 +454,15 @@ def get_books():
     cursor.execute(
         """
         SELECT b.id, b.catalog_code, b.title, b.poster, t.name as theme,
-               p.name as publisher,
+               p.name as publisher,GROUP_CONCAT(DISTINCT k.word) as keywords,
                COUNT(bc.copy_id) as total_copies,
                SUM(CASE WHEN bc.is_available = 1 THEN 1 ELSE 0 END) as available_copies
         FROM books b
         LEFT JOIN themes t ON b.theme_id = t.id
         LEFT JOIN publishers p ON b.publisher_id = p.id
         LEFT JOIN book_copies bc ON b.id = bc.book_id
+        LEFT JOIN book_keywords bk ON b.id = bk.book_id
+        LEFT JOIN keyword k ON bk.keyword_id = k.id
         GROUP BY b.id
         ORDER BY b.id
         """
