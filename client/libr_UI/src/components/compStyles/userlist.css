@@ -571,6 +571,11 @@
   border-top: 1px solid #e0e0e0;
   justify-content: flex-end;
 }
+.requested-book-item {
+  border-left-color: #ff9800 !important; /* Orange border */
+}
+
+
 
 /* Responsive */
 @media (max-width: 768px) {

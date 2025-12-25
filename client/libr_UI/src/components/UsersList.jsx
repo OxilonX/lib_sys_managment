@@ -4,6 +4,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Close as CloseIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
 import "./compStyles/userlist.css";
 import { useUsersData } from "../contexts/userDataContext";
@@ -21,7 +22,11 @@ export default function UsersList() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [detailPanelUser, setDetailPanelUser] = useState(null);
   const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [userRequests, setUserRequests] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(false);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [cancellingRequest, setCancellingRequest] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -46,6 +51,7 @@ export default function UsersList() {
     setDetailPanelUser(user);
     setDetailDialogOpen(true);
     await fetchUserBorrowedBooks(user.user_id);
+    await fetchUserRequests(user.user_id);
   };
 
   const fetchUserBorrowedBooks = async (userId) => {
@@ -59,6 +65,21 @@ export default function UsersList() {
       setError(err.message);
     } finally {
       setLoadingBooks(false);
+    }
+  };
+
+  const fetchUserRequests = async (userId) => {
+    try {
+      setLoadingRequests(true);
+      const response = await fetch(`/api/users/${userId}/requests`);
+      if (!response.ok) throw new Error("Failed to fetch user requests");
+      const data = await response.json();
+      setUserRequests(data);
+    } catch (err) {
+      console.log("Error fetching requests:", err.message);
+      setUserRequests([]);
+    } finally {
+      setLoadingRequests(false);
     }
   };
 
@@ -78,6 +99,8 @@ export default function UsersList() {
     setDetailDialogOpen(false);
     setDetailPanelUser(null);
     setBorrowedBooks([]);
+    setUserRequests([]);
+    setSuccessMessage(null);
   };
 
   const handleConfirmAction = async () => {
@@ -133,6 +156,31 @@ export default function UsersList() {
     }
 
     handleCloseDialog();
+  };
+
+  const handleCancelUserRequest = async (requestId) => {
+    try {
+      setCancellingRequest(true);
+      const response = await fetch(`/api/books/requests/${requestId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to cancel request");
+
+      // Remove the cancelled request from the list
+      setUserRequests(
+        userRequests.filter((req) => req.request_id !== requestId)
+      );
+      setSuccessMessage("Request cancelled successfully");
+
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCancellingRequest(false);
+    }
   };
 
   if (loading) {
@@ -332,6 +380,10 @@ export default function UsersList() {
             </div>
 
             <div className="detail-dialog-content">
+              {successMessage && (
+                <div className="detail-success-message">{successMessage}</div>
+              )}
+
               {/* Personal Information Section */}
               <div className="detail-section">
                 <h3>Personal Information</h3>
@@ -431,6 +483,72 @@ export default function UsersList() {
                             {new Date(book.due_date).toLocaleDateString()}
                           </p>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Requested Books Section */}
+              <div className="detail-section">
+                <h3>Requested Books ({userRequests.length})</h3>
+                {loadingRequests ? (
+                  <p className="detail-loading">Loading requests...</p>
+                ) : userRequests.length === 0 ? (
+                  <p className="detail-empty">No requested books</p>
+                ) : (
+                  <div className="borrowed-books-list">
+                    {userRequests.map((request) => (
+                      <div
+                        key={request.request_id}
+                        className="borrowed-book-item requested-book-item"
+                      >
+                        <div className="book-cover">
+                          {request.poster ? (
+                            <img src={request.poster} alt={request.title} />
+                          ) : (
+                            <div className="book-cover-placeholder">
+                              {request.title[0]}
+                            </div>
+                          )}
+                        </div>
+                        <div className="book-info">
+                          <p className="book-title">{request.title}</p>
+                          <p className="book-detail">
+                            <strong>Theme:</strong> {request.theme}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Location:</strong> {request.location}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Queue Position:</strong> #{request.position}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Requested:</strong>{" "}
+                            {new Date(
+                              request.requested_date
+                            ).toLocaleDateString()}
+                          </p>
+                          <p className="book-detail">
+                            <strong>Status:</strong>{" "}
+                            <span
+                              className={`request-status ${request.status}`}
+                            >
+                              {request.status}
+                            </span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleCancelUserRequest(request.request_id)
+                          }
+                          disabled={cancellingRequest}
+                          className="btn btn-danger btn-small"
+                          title="Cancel this request"
+                        >
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                          Cancel
+                        </button>
                       </div>
                     ))}
                   </div>
