@@ -9,11 +9,6 @@ import "./styles/generalStyle.css";
 import { UsersProvider } from "./contexts/userDataContext";
 import { BooksProvider } from "./contexts/booksDataContext.jsx";
 
-//Prime REACT Library imports
-import "primereact/resources/themes/bootstrap4-light-blue/theme.css"; // theme
-import "primereact/resources/primereact.min.css"; // core css
-import "primeicons/primeicons.css"; // icons
-import "primeflex/primeflex.css";
 import "./themes/custom/theme.css";
 
 createRoot(document.getElementById("root")).render(

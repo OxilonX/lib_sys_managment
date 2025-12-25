@@ -15,6 +15,8 @@ import {
   Grid,
   Card,
   Paper,
+  Tab,
+  Tabs,
 } from "@mui/material";
 import {
   History as HistoryIcon,
@@ -28,31 +30,51 @@ import "../styles/mybookspg.css";
 export default function MyBooks() {
   const { currUser } = useUsersData();
   const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [requestedBooks, setRequestedBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [returning, setReturning] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+
+  const fetchBorrowedBooks = async () => {
+    if (!currUser?.user?.user_id) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(
+        `/api/users/${currUser.user.user_id}/borrowed`
+      );
+      if (!response.ok) throw new Error("Failed to fetch borrowed books");
+      const data = await response.json();
+      setBorrowedBooks(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserRequests = async () => {
+    if (!currUser?.user?.user_id) return;
+    try {
+      const response = await fetch(
+        `/api/users/${currUser.user.user_id}/requests`
+      );
+      if (!response.ok) throw new Error("Failed to fetch requests");
+      const data = await response.json();
+      setRequestedBooks(data);
+    } catch (err) {
+      console.log("Error fetching requests:", err.message);
+    }
+  };
 
   useEffect(() => {
-    const fetchBorrowedBooks = async () => {
-      if (!currUser?.user?.user_id) return;
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch(
-          `/api/users/${currUser.user.user_id}/borrowed`
-        );
-        if (!response.ok) throw new Error("Failed to fetch borrowed books");
-        const data = await response.json();
-        setBorrowedBooks(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBorrowedBooks();
-  }, [currUser]);
+    fetchUserRequests();
+  }, [currUser?.user?.user_id]);
 
   const getDueStatus = (dueDate) => {
     const due = new Date(dueDate);
@@ -74,27 +96,52 @@ export default function MyBooks() {
     };
   };
 
+  const getRequestStatus = (status) => {
+    if (status === "ready")
+      return { text: "Ready to Borrow", color: "success", variant: "filled" };
+    return {
+      text: `Position ${
+        requestedBooks.find((b) => b.copy_id)?.position || "?"
+      }`,
+      color: "info",
+      variant: "outlined",
+    };
+  };
+
   const handleReturnBook = async (copyId) => {
     try {
-      setLoading(true);
+      setReturning(true);
+      setError(null);
       const response = await fetch(`/api/books/copies/${copyId}/return`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to return book");
-      setBorrowedBooks((prev) =>
-        prev.filter((book) => book.copy_id !== copyId)
+
+      setSuccess(
+        `Book returned successfully${
+          data.next_user ? "! The next person in queue has been notified." : "."
+        }`
       );
-      setOpenDialog(false);
+
+      // Refresh both borrowed and requested books
+      await fetchBorrowedBooks();
+      await fetchUserRequests();
+
+      setTimeout(() => {
+        setOpenDialog(false);
+        setSelectedBook(null);
+        setSuccess(null);
+      }, 2000);
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
     } finally {
-      setLoading(false);
+      setReturning(false);
     }
   };
 
-  if (loading && borrowedBooks.length === 0) {
+  if (loading && borrowedBooks.length === 0 && requestedBooks.length === 0) {
     return (
       <Box className="mb-loading-container">
         <CircularProgress />
@@ -108,64 +155,210 @@ export default function MyBooks() {
   return (
     <Container maxWidth="lg" className="mybooks-page" sx={{ padding: 0 }}>
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-        <HistoryIcon color="" sx={{ fontSize: 38, mt: 0.5 }} />
-        <h1 className="mb-title">My Borrowed Books</h1>
+        <HistoryIcon sx={{ fontSize: 38, mt: 0.5 }} />
+        <h1 className="mb-title">My Library</h1>
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
-      {borrowedBooks.length === 0 ? (
-        <Paper variant="outlined" className="mb-empty-state">
-          <Typography variant="h6">Your library is empty</Typography>
-          <Typography color="text.secondary">
-            Go to Explore to find your next read!
-          </Typography>
-        </Paper>
-      ) : (
-        <Grid container spacing={3} alignItems={"stretch"}>
-          {borrowedBooks.map((book) => {
-            const status = getDueStatus(book.due_date);
-            return (
-              <Grid item xs={12} sm={6} md={4} key={book.copy_id}>
-                <Card
-                  className="mb-book-card"
-                  onClick={() => {
-                    setSelectedBook(book);
-                    setOpenDialog(true);
-                  }}
-                >
-                  <CardMedia
-                    component="img"
-                    image={book.poster}
-                    alt={book.title}
-                    className="mb-card-media"
-                  />
-                  <Box className="mb-card-content">
-                    <h6 className="mb-title-truncate">{book.title}</h6>
-                    <p className="mb-location">
-                      <LocationIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                      {book.location}
-                    </p>
-                    <Chip
-                      label={status.text}
-                      color={status.color}
-                      variant={status.variant}
-                      size="small"
-                      sx={{ justifySelf: "end", marginTop: "auto" }}
-                    />
-                  </Box>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
+      {success && (
+        <Alert
+          severity="success"
+          sx={{ mb: 3 }}
+          onClose={() => setSuccess(null)}
+        >
+          {success}
+        </Alert>
       )}
 
-      {/* Modern Detail Dialog */}
+      {/* Tabs for Borrowed and Requests */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={(e, newValue) => setTabValue(newValue)}
+          sx={{
+            borderBottom: "1px solid #e0e0e0",
+          }}
+        >
+          <Tab
+            label={`Borrowed Books (${borrowedBooks.length})`}
+            sx={{ textTransform: "capitalize", fontWeight: 600 }}
+          />
+          <Tab
+            label={`Requested Books (${requestedBooks.length})`}
+            sx={{ textTransform: "capitalize", fontWeight: 600 }}
+          />
+        </Tabs>
+      </Paper>
+
+      {/* Borrowed Books Tab */}
+      {tabValue === 0 && (
+        <>
+          {borrowedBooks.length === 0 ? (
+            <Paper variant="outlined" className="mb-empty-state">
+              <Typography variant="h6">No borrowed books</Typography>
+              <Typography color="text.secondary">
+                Go to Explore to find your next read!
+              </Typography>
+            </Paper>
+          ) : (
+            <Grid container spacing={3} alignItems={"stretch"}>
+              {borrowedBooks.map((book) => {
+                const status = getDueStatus(book.due_date);
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={book.copy_id}>
+                    <Card
+                      className="mb-book-card"
+                      onClick={() => {
+                        setSelectedBook(book);
+                        setOpenDialog(true);
+                      }}
+                    >
+                      <CardMedia
+                        component="img"
+                        image={book.poster}
+                        alt={book.title}
+                        className="mb-card-media"
+                      />
+                      <Box className="mb-card-content">
+                        <h6 className="mb-title-truncate">{book.title}</h6>
+                        <p className="mb-location">
+                          <LocationIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                          {book.location}
+                        </p>
+                        <Chip
+                          label={status.text}
+                          color={status.color}
+                          variant={status.variant}
+                          size="small"
+                          sx={{ justifySelf: "end", marginTop: "auto" }}
+                        />
+                      </Box>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+        </>
+      )}
+
+      {/* Requested Books Tab */}
+      {tabValue === 1 && (
+        <>
+          {requestedBooks.length === 0 ? (
+            <Paper variant="outlined" className="mb-empty-state">
+              <Typography variant="h6">No requested books</Typography>
+              <Typography color="text.secondary">
+                Request books that are currently borrowed
+              </Typography>
+            </Paper>
+          ) : (
+            <Grid container spacing={3} alignItems={"stretch"}>
+              {requestedBooks.map((book) => {
+                // Calculate max estimated wait time (position * 15 days)
+                const maxWaitDays = book.position * 15;
+
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={book.request_id}>
+                    <Card
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          boxShadow: "0 8px 16px rgba(0, 0, 0, 0.15)",
+                          transform: "translateY(-4px)",
+                        },
+                      }}
+                    >
+                      <CardMedia
+                        component="img"
+                        image={book.poster}
+                        alt={book.title}
+                        sx={{
+                          height: 250,
+                          objectFit: "cover",
+                          filter: "brightness(70%)",
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          flex: 1,
+                          p: 2,
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            mb: 1,
+                            color: "#333",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                          }}
+                        >
+                          {book.title}
+                        </Typography>
+
+                        <Box sx={{ mb: 2 }}>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ mb: 0.5 }}
+                          >
+                            <strong>Location:</strong> {book.location}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            <strong>Requested:</strong>{" "}
+                            {new Date(book.requested_date).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 1,
+                            background: "#e3f2fd",
+                            mt: "auto",
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              color: "#1565c0",
+                              mb: 0.5,
+                            }}
+                          >
+                            Position: #{book.position}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            Est. wait: {maxWaitDays} days (max)
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+        </>
+      )}
+
+      {/* Return Confirmation Dialog */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
@@ -217,6 +410,7 @@ export default function MyBooks() {
                 fullWidth
                 variant="outlined"
                 onClick={() => setOpenDialog(false)}
+                disabled={returning}
               >
                 Cancel
               </Button>
@@ -225,9 +419,13 @@ export default function MyBooks() {
                 variant="contained"
                 color="primary"
                 onClick={() => handleReturnBook(selectedBook.copy_id)}
-                disabled={loading}
+                disabled={returning}
+                sx={{
+                  background:
+                    "linear-gradient(135deg, #81c784 0%, #66bb6a 100%)",
+                }}
               >
-                {loading ? <CircularProgress size={24} /> : "Confirm Return"}
+                {returning ? <CircularProgress size={24} /> : "Confirm Return"}
               </Button>
             </Box>
           </>
@@ -237,7 +435,6 @@ export default function MyBooks() {
   );
 }
 
-// Helper component for Dialog rows
 function DetailRow({ icon, label, value }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 //MUI lib comps
 import Chip from "@mui/material/Chip";
 //Prime React Lib Components
-import { Avatar } from "primereact/avatar";
+import Avatar from "@mui/material/Avatar";
 export default function ProfilePage() {
   const { currUser } = useUsersData();
   const navigate = useNavigate();
@@ -33,11 +33,16 @@ export default function ProfilePage() {
         {/* Header Section */}
         <div className="profile-header">
           <Avatar
-            label={currUser?.user.username?.charAt(0).toUpperCase() || "U"}
-            shape="circle"
-            className="profile-avatar p-button-primary"
-            alt="Profile"
-          />
+            className="profile-avatar"
+            sx={{
+              bgcolor: "primary.main",
+              width: 56,
+              height: 56,
+              fontSize: "1.5rem",
+            }}
+          >
+            {currUser?.user.username?.charAt(0).toUpperCase() || "U"}
+          </Avatar>
           <h1 className="profile-name">
             {currUser?.user?.fname} {currUser?.user?.lname}
           </h1>

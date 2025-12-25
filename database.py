@@ -13,6 +13,7 @@ def get_db():
 def init_db():
     conn = sqlite3.connect("data.db")
     cur = conn.cursor()
+
     # Users Table
     cur.execute(
         """
@@ -27,12 +28,31 @@ def init_db():
         password TEXT NOT NULL,
         address TEXT NOT NULL,
         phone TEXT NOT NULL, 
-        role TEXT NOT NULL CHECK (role IN ('admin', 'user')) DEFAULT 'user' ,
+        role TEXT NOT NULL CHECK (role IN ('admin', 'user')) DEFAULT 'user',
         is_subscribed INTEGER DEFAULT 0,
         join_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """
     )
+
+    # Themes Table
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS themes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE
+    );
+    """
+    )
+
+    # Publishers Table
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS publishers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE
+    );
+    """
+    )
+
     # Books Table
     cur.execute(
         """
@@ -50,7 +70,7 @@ def init_db():
     """
     )
 
-    # book copies table
+    # Book Copies Table
     cur.execute(
         """
     CREATE TABLE IF NOT EXISTS book_copies (
@@ -64,12 +84,14 @@ def init_db():
         due_date TIMESTAMP,
         state INTEGER DEFAULT 100,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
         FOREIGN KEY (publisher_id) REFERENCES publishers(id),
         FOREIGN KEY (borrowed_by) REFERENCES users(user_id)
     );
     """
     )
+
     # Authors Table
     cur.execute(
         """CREATE TABLE IF NOT EXISTS authors (
@@ -78,8 +100,8 @@ def init_db():
     );
     """
     )
-    # Jointures
-    # JOIN books with authors Table
+
+    # Book Authors Junction Table
     cur.execute(
         """
     CREATE TABLE IF NOT EXISTS book_authors (
@@ -88,48 +110,6 @@ def init_db():
         PRIMARY KEY (book_id, author_id),
         FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
         FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE
-    );
-    """
-    )
-    # JOIN books with keyword Table
-    cur.execute(
-        """
-    CREATE TABLE IF NOT EXISTS book_keywords (
-        book_id INTEGER NOT NULL,
-        keyword_id INTEGER NOT NULL,
-        PRIMARY KEY (book_id, keyword_id),
-        FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
-        FOREIGN KEY (keyword_id) REFERENCES keyword(id) ON DELETE CASCADE
-    );
-    """
-    )
-
-    # JOIN books with publishers Table
-    cur.execute(
-        """
-    CREATE TABLE IF NOT EXISTS book_publishers (
-        book_id INTEGER NOT NULL,
-        publisher_id INTEGER NOT NULL,
-        PRIMARY KEY (book_id, publisher_id),
-        FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
-        FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON DELETE CASCADE
-    );
-    """
-    )
-
-    # Themes Table
-    cur.execute(
-        """CREATE TABLE IF NOT EXISTS themes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE
-    );
-    """
-    )
-    # Publishers Table
-    cur.execute(
-        """CREATE TABLE IF NOT EXISTS publishers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE
     );
     """
     )
@@ -143,7 +123,21 @@ def init_db():
     );
     """
     )
-    # Requests table
+
+    # Book Keywords Junction Table
+    cur.execute(
+        """
+    CREATE TABLE IF NOT EXISTS book_keywords (
+        book_id INTEGER NOT NULL,
+        keyword_id INTEGER NOT NULL,
+        PRIMARY KEY (book_id, keyword_id),
+        FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+        FOREIGN KEY (keyword_id) REFERENCES keyword(id) ON DELETE CASCADE
+    );
+    """
+    )
+
+    # Book Requests Table
     cur.execute(
         """
     CREATE TABLE IF NOT EXISTS book_requests (
@@ -153,21 +147,23 @@ def init_db():
         requested_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         position INTEGER NOT NULL,
         status TEXT DEFAULT 'waiting',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (copy_id) REFERENCES book_copies(copy_id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
         UNIQUE(copy_id, user_id)
     );
     """
     )
-    # cur.execute("DELETE FROM book_copies WHERE book_id = 2")
+
     conn.commit()
     conn.close()
 
 
-# Util functions to manipulate the database
+# Utility functions to manipulate the database
 
 
 def get_or_create_id(table_name, name_value, name_column="name"):
+    """Get ID from table or create new entry and return ID"""
     db = get_db()
     cursor = db.cursor()
 
@@ -186,12 +182,12 @@ def get_or_create_id(table_name, name_value, name_column="name"):
 
 
 def insert_book_authors(book_id, author_names):
+    """Insert authors for a book"""
     db = get_db()
     cursor = db.cursor()
 
     for author_name in author_names:
         author_id = get_or_create_id("authors", author_name, "name")
-
         cursor.execute(
             """INSERT INTO book_authors (book_id, author_id) VALUES (?, ?)""",
             (book_id, author_id),
@@ -199,36 +195,15 @@ def insert_book_authors(book_id, author_names):
     db.commit()
 
 
-def insert_book_publishers(book_id, publisher_names):
-    db = get_db()
-    cursor = db.cursor()
-
-    for publisher_name in publisher_names:
-        publisher_id = get_or_create_id("publishers", publisher_name, "name")
-
-        cursor.execute(
-            """INSERT INTO book_publishers (book_id, publisher_id) VALUES (?, ?)""",
-            (book_id, publisher_id),
-        )
-    db.commit()
-
-
 def insert_book_keywords(book_id, keyword_words):
+    """Insert keywords for a book"""
     db = get_db()
     cursor = db.cursor()
 
     for keyword_word in keyword_words:
         keyword_id = get_or_create_id("keyword", keyword_word, "word")
-
         cursor.execute(
             """INSERT INTO book_keywords (book_id, keyword_id) VALUES (?, ?)""",
             (book_id, keyword_id),
         )
     db.commit()
-
-
-# Delete users with empty age row
-# cur.execute("DELETE FROM users WHERE age= ?", ("",))
-# cur.execute("UPDATE users SET role = 'admin' WHERE email= ?", ("a@gmail.com",))
-# cur.execute("DELETE FROM users WHERE age= ?",("",))
-# cur.execute("DELETE FROM sqlite_sequence WHERE name='users'")

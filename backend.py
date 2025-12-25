@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, g, json
 from flask_cors import CORS
 from database import (
@@ -256,9 +257,6 @@ def update_book_copy(copy_id):
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
 
-from datetime import datetime
-
-
 @app.route("/api/books/copies/<int:copy_id>/borrow", methods=["POST"])
 def borrow_book_copy(copy_id):
     """Borrow a book copy for 15 days"""
@@ -317,13 +315,13 @@ def borrow_book_copy(copy_id):
 
 @app.route("/api/books/copies/<int:copy_id>/return", methods=["POST"])
 def return_book_copy(copy_id):
-    """Return a borrowed book copy and notify next in queue"""
+    """Return a borrowed book copy and auto-borrow to next in queue"""
     db = get_db()
     cursor = db.cursor()
 
     try:
         cursor.execute(
-            "SELECT is_available FROM book_copies WHERE copy_id = ?", (copy_id,)
+            "SELECT is_available, state FROM book_copies WHERE copy_id = ?", (copy_id,)
         )
         copy = cursor.fetchone()
 
@@ -345,20 +343,31 @@ def return_book_copy(copy_id):
         )
         next_request = cursor.fetchone()
 
-        # Return the book
-        cursor.execute(
-            """
-            UPDATE book_copies 
-            SET is_available = 1, borrowed_by = NULL, borrowed_date = NULL, due_date = NULL
-            WHERE copy_id = ?
-            """,
-            (copy_id,),
-        )
-
-        # If someone is waiting, move them to ready status and decrement other positions
         if next_request:
+            # Auto-borrow the book for the next person
+            user_id = next_request["user_id"]
+            due_date = datetime.now() + timedelta(days=15)
+            current_state = copy["state"] if copy["state"] else 100
+            new_state = max(0, current_state - 5)
+
             cursor.execute(
-                "UPDATE book_requests SET status = 'ready' WHERE request_id = ?",
+                """
+                UPDATE book_copies 
+                SET is_available = 0, borrowed_by = ?, borrowed_date = ?, due_date = ?, state = ?
+                WHERE copy_id = ?
+                """,
+                (
+                    user_id,
+                    datetime.now().isoformat(),
+                    due_date.isoformat(),
+                    new_state,
+                    copy_id,
+                ),
+            )
+
+            # Delete the request for this user
+            cursor.execute(
+                "DELETE FROM book_requests WHERE request_id = ?",
                 (next_request["request_id"],),
             )
 
@@ -371,6 +380,16 @@ def return_book_copy(copy_id):
                 """,
                 (copy_id,),
             )
+        else:
+            # No one in queue, just mark as available
+            cursor.execute(
+                """
+                UPDATE book_copies 
+                SET is_available = 1, borrowed_by = NULL, borrowed_date = NULL, due_date = NULL
+                WHERE copy_id = ?
+                """,
+                (copy_id,),
+            )
 
         db.commit()
 
@@ -380,6 +399,7 @@ def return_book_copy(copy_id):
                     "message": "Book returned successfully",
                     "copy_id": copy_id,
                     "next_user": next_request["user_id"] if next_request else None,
+                    "auto_borrowed": bool(next_request),
                 }
             ),
             200,
@@ -387,6 +407,10 @@ def return_book_copy(copy_id):
 
     except Exception as e:
         db.rollback()
+        print(f"Error in return_book_copy: {e}")
+        import traceback
+
+        traceback.print_exc()
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
 

@@ -13,7 +13,6 @@ export default function ChipInput({ label, value = [], onChange }) {
   const handleAddChip = (e) => {
     if (e.key === "Enter" && inputValue.trim()) {
       e.preventDefault();
-      // Avoid duplicates
       if (!valueArray.includes(inputValue.trim())) {
         onChange([...valueArray, inputValue.trim()]);
       }
