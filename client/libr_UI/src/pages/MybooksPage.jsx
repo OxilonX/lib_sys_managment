@@ -23,6 +23,7 @@ import {
   LocationOn as LocationIcon,
   Business as PublisherIcon,
   Event as DateIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { useUsersData } from "../contexts/userDataContext";
 import "../styles/mybookspg.css";
@@ -37,7 +38,9 @@ export default function MyBooks() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [returning, setReturning] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [dialogType, setDialogType] = useState("return"); // 'return' or 'cancel'
 
   const fetchBorrowedBooks = async () => {
     if (!currUser?.user?.user_id) return;
@@ -96,18 +99,6 @@ export default function MyBooks() {
     };
   };
 
-  const getRequestStatus = (status) => {
-    if (status === "ready")
-      return { text: "Ready to Borrow", color: "success", variant: "filled" };
-    return {
-      text: `Position ${
-        requestedBooks.find((b) => b.copy_id)?.position || "?"
-      }`,
-      color: "info",
-      variant: "outlined",
-    };
-  };
-
   const handleReturnBook = async (copyId) => {
     try {
       setReturning(true);
@@ -133,11 +124,40 @@ export default function MyBooks() {
         setOpenDialog(false);
         setSelectedBook(null);
         setSuccess(null);
-      }, 2000);
+      }, 1000);
     } catch (err) {
       setError(err.message);
     } finally {
       setReturning(false);
+    }
+  };
+
+  const handleCancelRequest = async (requestId) => {
+    try {
+      setCancelling(true);
+      setError(null);
+      const response = await fetch(`/api/books/requests/${requestId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to cancel request");
+
+      setSuccess("Request cancelled successfully");
+
+      // Refresh requested books
+      await fetchUserRequests();
+
+      setTimeout(() => {
+        setOpenDialog(false);
+        setSelectedBook(null);
+        setSuccess(null);
+      }, 1000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -215,6 +235,7 @@ export default function MyBooks() {
                       className="mb-book-card"
                       onClick={() => {
                         setSelectedBook(book);
+                        setDialogType("return");
                         setOpenDialog(true);
                       }}
                     >
@@ -332,6 +353,7 @@ export default function MyBooks() {
                             borderRadius: 1,
                             background: "#e3f2fd",
                             mt: "auto",
+                            mb: 1.5,
                           }}
                         >
                           <Typography
@@ -348,6 +370,21 @@ export default function MyBooks() {
                             Est. wait: {maxWaitDays} days (max)
                           </Typography>
                         </Box>
+
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          size="small"
+                          startIcon={<CloseIcon />}
+                          color="error"
+                          onClick={() => {
+                            setSelectedBook(book);
+                            setDialogType("cancel");
+                            setOpenDialog(true);
+                          }}
+                        >
+                          Cancel Request
+                        </Button>
                       </Box>
                     </Card>
                   </Grid>
@@ -358,7 +395,7 @@ export default function MyBooks() {
         </>
       )}
 
-      {/* Return Confirmation Dialog */}
+      {/* Dialog for Return or Cancel */}
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
@@ -368,7 +405,9 @@ export default function MyBooks() {
         {selectedBook && (
           <>
             <DialogTitle sx={{ fontWeight: "bold" }}>
-              Return Confirmation
+              {dialogType === "return"
+                ? "Return Confirmation"
+                : "Cancel Request Confirmation"}
             </DialogTitle>
             <DialogContent dividers>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
@@ -387,45 +426,80 @@ export default function MyBooks() {
                     <DetailRow
                       icon={<PublisherIcon />}
                       label="Publisher"
-                      value={selectedBook.publisher}
+                      value={
+                        selectedBook.publisher ||
+                        selectedBook.publisher_name ||
+                        "Unknown"
+                      }
                     />
                     <DetailRow
                       icon={<LocationIcon />}
                       label="Location"
                       value={selectedBook.location}
                     />
-                    <DetailRow
-                      icon={<DateIcon />}
-                      label="Due Date"
-                      value={new Date(
-                        selectedBook.due_date
-                      ).toLocaleDateString()}
-                    />
+                    {dialogType === "return" && (
+                      <DetailRow
+                        icon={<DateIcon />}
+                        label="Due Date"
+                        value={new Date(
+                          selectedBook.due_date
+                        ).toLocaleDateString()}
+                      />
+                    )}
+                    {dialogType === "cancel" && (
+                      <DetailRow
+                        icon={<CloseIcon />}
+                        label="Queue Position"
+                        value={`#${selectedBook.position}`}
+                      />
+                    )}
                   </Stack>
                 </Box>
               </Stack>
+              {dialogType === "cancel" && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Are you sure you want to cancel this request? You can request
+                  this book again later.
+                </Alert>
+              )}
             </DialogContent>
             <Box sx={{ p: 2, display: "flex", gap: 2 }}>
               <Button
                 fullWidth
                 variant="outlined"
                 onClick={() => setOpenDialog(false)}
-                disabled={returning}
+                disabled={returning || cancelling}
               >
-                Cancel
+                Close
               </Button>
               <Button
                 fullWidth
                 variant="contained"
-                color="primary"
-                onClick={() => handleReturnBook(selectedBook.copy_id)}
-                disabled={returning}
-                sx={{
-                  background:
-                    "linear-gradient(135deg, #81c784 0%, #66bb6a 100%)",
+                color={dialogType === "return" ? "primary" : "error"}
+                onClick={() => {
+                  if (dialogType === "return") {
+                    handleReturnBook(selectedBook.copy_id);
+                  } else {
+                    handleCancelRequest(selectedBook.request_id);
+                  }
                 }}
+                disabled={returning || cancelling}
+                sx={
+                  dialogType === "return"
+                    ? {
+                        background:
+                          "linear-gradient(135deg, #81c784 0%, #66bb6a 100%)",
+                      }
+                    : {}
+                }
               >
-                {returning ? <CircularProgress size={24} /> : "Confirm Return"}
+                {returning || cancelling ? (
+                  <CircularProgress size={24} />
+                ) : dialogType === "return" ? (
+                  "Confirm Return"
+                ) : (
+                  "Confirm Cancellation"
+                )}
               </Button>
             </Box>
           </>
