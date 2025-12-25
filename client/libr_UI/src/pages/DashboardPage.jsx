@@ -65,17 +65,15 @@ export default function DashboardPage() {
     fetchUsers();
   }, []);
 
-  // Determine which tab should be active based on URL
   useEffect(() => {
-    if (location.pathname.includes("booksmanagments")) {
+    if (location.pathname.includes("addbook")) {
       setTabValue(0);
-    } else if (location.pathname.includes("addbook")) {
+    } else if (location.pathname.includes("booksmanagments")) {
       setTabValue(1);
     } else if (location.pathname.includes("userslist")) {
       setTabValue(2);
     }
   }, [location.pathname]);
-
   // Calculate statistics
   const stats = {
     totalBooks: books.length,
@@ -176,12 +174,12 @@ export default function DashboardPage() {
             onChange={handleTabChange}
             className="dashboard-tabs"
           >
+            <Tab label="Add New Book" component={Link} to="addbook" />
             <Tab
               label="Books Management"
               component={Link}
               to="booksmanagments"
             />
-            <Tab label="Add New Book" component={Link} to="addbook" />
             <Tab label="Users Management" component={Link} to="userslist" />
           </Tabs>
         </Paper>

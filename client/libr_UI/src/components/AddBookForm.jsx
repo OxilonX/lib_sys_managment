@@ -140,7 +140,7 @@ export default function AddBookForm() {
   return (
     <Box className="abf-container">
       {/* Header */}
-      <Box className="abf-header">
+      <Box className="abf-header" sx={{ pb: 3 }}>
         <h1 className="abf-header-title ">Add New Book</h1>
       </Box>
 
@@ -251,13 +251,12 @@ export default function AddBookForm() {
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr", 
+                  gridTemplateColumns: "1fr 1fr",
                   gap: 2,
                   width: "100%",
                   alignItems: "start",
                 }}
               >
-               
                 <Box>
                   <ChipInput
                     label="Authors"

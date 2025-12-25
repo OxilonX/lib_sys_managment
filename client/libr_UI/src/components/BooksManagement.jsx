@@ -164,10 +164,10 @@ export default function BooksManagement() {
 
   return (
     <Box className="bm-container">
-      <Box className="abf-header" sx={{ mb: 4 }}>
-        <Typography variant="h4" className="abf-title">
+      <Box className="abf-header" sx={{ mb: 4, pb: 3 }}>
+        <h1 className="abf-title">
           Books Management
-        </Typography>
+        </h1>
       </Box>
 
       {/* SEARCH BAR */}

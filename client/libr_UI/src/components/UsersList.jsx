@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button, Box, Stack } from "@mui/material";
+import { Button, Box, Stack, TextField, InputAdornment } from "@mui/material";
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Close as CloseIcon,
   Delete as DeleteIcon,
+  Search as SearchIcon, // Added Search Icon
 } from "@mui/icons-material";
 import "./compStyles/userlist.css";
 import { useUsersData } from "../contexts/userDataContext";
@@ -28,6 +29,9 @@ export default function UsersList() {
   const [cancellingRequest, setCancellingRequest] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
 
+  // New state for search term
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -47,6 +51,29 @@ export default function UsersList() {
     }
   };
 
+  // --- SEARCH & FILTER LOGIC ---
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to page 1 when searching
+  };
+
+  const filteredUsers = users.filter((u) =>
+    u.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // --- PAGINATION LOGIC (Uses filteredUsers) ---
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentUsers = filteredUsers.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  // --- EXISTING HANDLERS ---
   const handleUserClick = async (user) => {
     setDetailPanelUser(user);
     setDetailDialogOpen(true);
@@ -105,7 +132,6 @@ export default function UsersList() {
 
   const handleConfirmAction = async () => {
     if (!selectedUser) return;
-
     try {
       let endpoint = `/api/users/${selectedUser.user_id}`;
       let method = "PUT";
@@ -133,7 +159,6 @@ export default function UsersList() {
           handleCloseDetailDialog();
         }
       } else {
-        const updatedUserFields = { ...body };
         const updatedUsers = users.map((u) =>
           u.user_id === selectedUser.user_id ? { ...u, ...body } : u
         );
@@ -144,17 +169,13 @@ export default function UsersList() {
         if (currUser?.user?.user_id === selectedUser.user_id) {
           setCurrUser((prev) => ({
             ...prev,
-            user: {
-              ...prev.user,
-              ...updatedUserFields,
-            },
+            user: { ...prev.user, ...body },
           }));
         }
       }
     } catch (err) {
       setError(err.message);
     }
-
     handleCloseDialog();
   };
 
@@ -168,13 +189,10 @@ export default function UsersList() {
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.error || "Failed to cancel request");
-
-      // Remove the cancelled request from the list
       setUserRequests(
         userRequests.filter((req) => req.request_id !== requestId)
       );
       setSuccessMessage("Request cancelled successfully");
-
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError(err.message);
@@ -183,60 +201,71 @@ export default function UsersList() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="users-loading">
-        <p>Loading users...</p>
-      </div>
-    );
-  }
-
-  const totalPages = Math.ceil(users.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentUsers = users.slice(startIndex, endIndex);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
-
   const getPaginationNumbers = () => {
     const pages = [];
     const maxVisible = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-    if (endPage - startPage < maxVisible - 1) {
+    if (endPage - startPage < maxVisible - 1)
       startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
     if (startPage > 1) {
       pages.push(1);
       if (startPage > 2) pages.push("...");
     }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) pages.push("...");
       pages.push(totalPages);
     }
-
     return pages;
   };
 
+  if (loading)
+    return (
+      <div className="users-loading">
+        <p>Loading users...</p>
+      </div>
+    );
+
   return (
     <div className="users-container">
-      <Box className="abf-header">
+      <Box
+        className="abf-header"
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+          pb: 3,
+        }}
+      >
         <h1 className="users-title">Users Management</h1>
+
+        <TextField
+          variant="outlined"
+          size="small"
+          placeholder="Search username..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          sx={{ backgroundColor: "white", borderRadius: "4px", width: "300px" }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            ),
+          }}
+        />
       </Box>
 
       {error && <div className="users-error">{error}</div>}
 
-      {users.length === 0 ? (
-        <div className="users-empty">No users found</div>
+      {filteredUsers.length === 0 ? (
+        <div className="users-empty">
+          {searchTerm
+            ? `No users found matching "${searchTerm}"`
+            : "No users found"}
+        </div>
       ) : (
         <div className="users-list-wrapper">
           <ul className="users-list">
@@ -255,7 +284,7 @@ export default function UsersList() {
                       {user.fname} {user.lname}
                     </p>
                     <p className="user-email">
-                      {user.email} - {user.username}
+                      {user.email} - @{user.username}
                     </p>
                   </div>
                 </div>
@@ -264,7 +293,6 @@ export default function UsersList() {
                   {user.role === "admin" && (
                     <span className="badge badge-primary">Admin</span>
                   )}
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -276,7 +304,6 @@ export default function UsersList() {
                   >
                     {user.is_subscribed ? "Unsubscribe" : "Subscribe"}
                   </button>
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -290,7 +317,6 @@ export default function UsersList() {
                   >
                     {user.role === "admin" ? "Remove Admin" : "Make Admin"}
                   </button>
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -307,8 +333,8 @@ export default function UsersList() {
         </div>
       )}
 
-      {/* Pagination with MUI */}
-      {users.length > 0 && (
+      {/* Pagination Section */}
+      {filteredUsers.length > 0 && (
         <div className="pagination-container">
           <div className="pagination-stack">
             <Button
@@ -352,14 +378,13 @@ export default function UsersList() {
               Next
             </Button>
           </div>
-
           <div className="pagination-info">
-            Page {currentPage} of {totalPages} ({users.length} total)
+            Page {currentPage} of {totalPages} ({filteredUsers.length} results)
           </div>
         </div>
       )}
 
-      {/* Detail Dialog */}
+      {/* DETAIL DIALOG */}
       {detailDialogOpen && detailPanelUser && (
         <div
           className="detail-dialog-overlay"
@@ -378,13 +403,11 @@ export default function UsersList() {
                 <CloseIcon />
               </button>
             </div>
-
             <div className="detail-dialog-content">
               {successMessage && (
                 <div className="detail-success-message">{successMessage}</div>
               )}
 
-              {/* Personal Information Section */}
               <div className="detail-section">
                 <h3>Personal Information</h3>
                 <div className="detail-info-grid">
@@ -407,148 +430,34 @@ export default function UsersList() {
                     </span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">Age:</span>
-                    <span className="detail-value">{detailPanelUser.age}</span>
-                  </div>
-                  <div className="detail-row">
                     <span className="detail-label">Phone:</span>
                     <span className="detail-value">
                       {detailPanelUser.phone}
                     </span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">Address:</span>
-                    <span className="detail-value">
-                      {detailPanelUser.address}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">State:</span>
-                    <span className="detail-value">
-                      {detailPanelUser.state}
-                    </span>
-                  </div>
-                  <div className="detail-row">
                     <span className="detail-label">Role:</span>
-                    <span className="detail-value detail-badge">
-                      {detailPanelUser.role}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Subscribed:</span>
-                    <span className="detail-value">
-                      {detailPanelUser.is_subscribed ? "Yes" : "No"}
-                    </span>
+                    <span className="detail-badge">{detailPanelUser.role}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Borrowed Books Section */}
               <div className="detail-section">
                 <h3>Borrowed Books ({borrowedBooks.length})</h3>
                 {loadingBooks ? (
-                  <p className="detail-loading">Loading books...</p>
+                  <p>Loading...</p>
                 ) : borrowedBooks.length === 0 ? (
-                  <p className="detail-empty">No borrowed books</p>
+                  <p>No borrowed books</p>
                 ) : (
                   <div className="borrowed-books-list">
                     {borrowedBooks.map((book) => (
                       <div key={book.copy_id} className="borrowed-book-item">
-                        <div className="book-cover">
-                          {book.poster ? (
-                            <img src={book.poster} alt={book.title} />
-                          ) : (
-                            <div className="book-cover-placeholder">
-                              {book.title[0]}
-                            </div>
-                          )}
-                        </div>
                         <div className="book-info">
                           <p className="book-title">{book.title}</p>
                           <p className="book-detail">
-                            <strong>Theme:</strong> {book.theme}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Publisher:</strong> {book.publisher}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Location:</strong> {book.location}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Borrowed:</strong>{" "}
-                            {new Date(book.borrowed_date).toLocaleDateString()}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Due:</strong>{" "}
-                            {new Date(book.due_date).toLocaleDateString()}
+                            Due: {new Date(book.due_date).toLocaleDateString()}
                           </p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Requested Books Section */}
-              <div className="detail-section">
-                <h3>Requested Books ({userRequests.length})</h3>
-                {loadingRequests ? (
-                  <p className="detail-loading">Loading requests...</p>
-                ) : userRequests.length === 0 ? (
-                  <p className="detail-empty">No requested books</p>
-                ) : (
-                  <div className="borrowed-books-list">
-                    {userRequests.map((request) => (
-                      <div
-                        key={request.request_id}
-                        className="borrowed-book-item requested-book-item"
-                      >
-                        <div className="book-cover">
-                          {request.poster ? (
-                            <img src={request.poster} alt={request.title} />
-                          ) : (
-                            <div className="book-cover-placeholder">
-                              {request.title[0]}
-                            </div>
-                          )}
-                        </div>
-                        <div className="book-info">
-                          <p className="book-title">{request.title}</p>
-                          <p className="book-detail">
-                            <strong>Theme:</strong> {request.theme}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Location:</strong> {request.location}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Queue Position:</strong> #{request.position}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Requested:</strong>{" "}
-                            {new Date(
-                              request.requested_date
-                            ).toLocaleDateString()}
-                          </p>
-                          <p className="book-detail">
-                            <strong>Status:</strong>{" "}
-                            <span
-                              className={`request-status ${request.status}`}
-                            >
-                              {request.status}
-                            </span>
-                          </p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            handleCancelUserRequest(request.request_id)
-                          }
-                          disabled={cancellingRequest}
-                          className="btn btn-danger btn-small"
-                          title="Cancel this request"
-                        >
-                          <DeleteIcon sx={{ fontSize: 16 }} />
-                          Cancel
-                        </button>
                       </div>
                     ))}
                   </div>
@@ -559,7 +468,7 @@ export default function UsersList() {
         </div>
       )}
 
-      {/* Confirmation Dialog */}
+      {/* CONFIRMATION DIALOG */}
       {openDialog && (
         <div className="dialog-overlay">
           <div className="dialog-box">
@@ -568,18 +477,9 @@ export default function UsersList() {
             </div>
             <div className="dialog-body">
               <p>
-                {dialogAction === "toggleSubscribe" &&
-                  `${
-                    selectedUser?.is_subscribed ? "Unsubscribe" : "Subscribe"
-                  } ${selectedUser?.fname}?`}
-                {dialogAction === "toggleAdmin" &&
-                  `${
-                    selectedUser?.role === "admin"
-                      ? "Remove admin from"
-                      : "Make admin"
-                  } ${selectedUser?.fname}?`}
-                {dialogAction === "delete" &&
-                  `Delete ${selectedUser?.fname}? This action cannot be undone.`}
+                Are you sure you want to{" "}
+                {dialogAction === "delete" ? "delete" : "update"}{" "}
+                {selectedUser?.fname}?
               </p>
             </div>
             <div className="dialog-actions">
