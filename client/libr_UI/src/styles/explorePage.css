@@ -83,4 +83,35 @@ grid-auto-rows: min-content;  gap: 40px 20px;
   opacity: 0.8;
   margin: 0;
   font-weight: 500;
+}.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #e0e0e0;
+  margin-top: 2rem;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.empty-state-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.empty-state-text {
+  color: #666;
+  max-width: 400px;
+  line-height: 1.5;
 }

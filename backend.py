@@ -196,6 +196,55 @@ def add_book_copy(book_id):
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
 
+@app.route("/api/books/copies/<int:copy_id>/borrow", methods=["POST"])
+def borrow_book_copy(copy_id):
+    db = get_db()
+    cursor = db.cursor()
+    data = request.json
+
+    user_id = data.get("user_id")
+    due_date = data.get("due_date")
+
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    try:
+        cursor.execute(
+            "SELECT is_available FROM book_copies WHERE copy_id = ?", (copy_id,)
+        )
+        copy = cursor.fetchone()
+
+        if not copy:
+            return jsonify({"error": "Copy not found"}), 404
+        if copy["is_available"] == 0:
+            return jsonify({"error": "Copy is not available"}), 400
+
+        cursor.execute(
+            """
+            UPDATE book_copies 
+            SET is_available = 0, borrowed_by = ?, borrowed_date = ?, due_date = ?
+            WHERE copy_id = ?
+            """,
+            (user_id, datetime.now().isoformat(), due_date, copy_id),
+        )
+
+        db.commit()
+        return (
+            jsonify(
+                {
+                    "message": "Book borrowed successfully",
+                    "copy_id": copy_id,
+                    "removed": False,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+
+
 @app.route("/api/books/copies/<int:copy_id>", methods=["DELETE"])
 def delete_book_copy(copy_id):
     """Delete a specific book copy"""
@@ -288,65 +337,8 @@ def update_book_copy(copy_id):
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
 
-@app.route("/api/books/copies/<int:copy_id>/borrow", methods=["POST"])
-def borrow_book_copy(copy_id):
-    """Borrow a book copy for 15 days"""
-    db = get_db()
-    cursor = db.cursor()
-    data = request.json
-
-    user_id = data.get("user_id")
-    due_date = data.get("due_date")
-
-    # Check if user_id is provided
-    if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
-    try:
-        # Check if copy exists and is available
-        cursor.execute(
-            "SELECT is_available,state FROM book_copies WHERE copy_id = ?", (copy_id,)
-        )
-        copy = cursor.fetchone()
-
-        if not copy:
-            return jsonify({"error": "Copy not found"}), 404
-
-        if copy["is_available"] == 0:
-            return jsonify({"error": "Copy is not available"}), 400
-
-        new_state = max(0, copy["state"] - 5)
-        # Update copy - mark as borrowed
-        cursor.execute(
-            """
-            UPDATE book_copies 
-            SET is_available = 0, borrowed_by = ?, borrowed_date = ?, due_date = ?,state=?
-            WHERE copy_id = ?
-            """,
-            (user_id, datetime.now().isoformat(), due_date, new_state, copy_id),
-        )
-
-        db.commit()
-
-        return (
-            jsonify(
-                {
-                    "message": "Book borrowed successfully",
-                    "copy_id": copy_id,
-                    "due_date": due_date,
-                    "new_state": new_state,
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        db.rollback()
-        return jsonify({"error": "Server error", "details": str(e)}), 500
-
-
 @app.route("/api/books/copies/<int:copy_id>/return", methods=["POST"])
 def return_book_copy(copy_id):
-    """Return a borrowed book copy and auto-borrow to next in queue"""
     db = get_db()
     cursor = db.cursor()
 
@@ -356,80 +348,81 @@ def return_book_copy(copy_id):
         )
         copy = cursor.fetchone()
 
-        if not copy:
-            return jsonify({"error": "Copy not found"}), 404
+        if not copy or copy["is_available"] == 1:
+            return jsonify({"error": "Copy not found or not borrowed"}), 400
 
-        if copy["is_available"] == 1:
-            return jsonify({"error": "Copy is not borrowed"}), 400
+        current_state = copy["state"] if copy["state"] is not None else 100
+        new_state = max(0, current_state - 20)
 
-        # Get first person in request queue
+        if new_state <= 0:
+            cursor.execute("DELETE FROM book_requests WHERE copy_id = ?", (copy_id,))
+            cursor.execute("DELETE FROM book_copies WHERE copy_id = ?", (copy_id,))
+            db.commit()
+            return (
+                jsonify(
+                    {
+                        "message": "Copy returned in poor condition and retired from inventory.",
+                        "removed": True,
+                        "copy_id": copy_id,
+                    }
+                ),
+                200,
+            )
+
         cursor.execute(
             """
             SELECT request_id, user_id FROM book_requests 
             WHERE copy_id = ? AND status = 'waiting'
-            ORDER BY position ASC
-            LIMIT 1
-            """,
+            ORDER BY position ASC LIMIT 1
+        """,
             (copy_id,),
         )
         next_request = cursor.fetchone()
 
         if next_request:
-            # Auto-borrow the book for the next person
+            # Auto-borrow for next person
             user_id = next_request["user_id"]
-            due_date = datetime.now() + timedelta(days=15)
-            current_state = copy["state"] if copy["state"] else 100
-            new_state = max(0, current_state - 5)
+            due_date = (datetime.now() + timedelta(days=15)).isoformat()
 
             cursor.execute(
                 """
                 UPDATE book_copies 
                 SET is_available = 0, borrowed_by = ?, borrowed_date = ?, due_date = ?, state = ?
                 WHERE copy_id = ?
-                """,
-                (
-                    user_id,
-                    datetime.now().isoformat(),
-                    due_date.isoformat(),
-                    new_state,
-                    copy_id,
-                ),
+            """,
+                (user_id, datetime.now().isoformat(), due_date, new_state, copy_id),
             )
 
-            # Delete the request for this user
             cursor.execute(
                 "DELETE FROM book_requests WHERE request_id = ?",
                 (next_request["request_id"],),
             )
 
-            # Decrement positions for remaining requests
+            # Reorder queue
             cursor.execute(
                 """
-                UPDATE book_requests 
-                SET position = position - 1 
+                UPDATE book_requests SET position = position - 1 
                 WHERE copy_id = ? AND status = 'waiting'
-                """,
+            """,
                 (copy_id,),
             )
         else:
-            # No one in queue, just mark as available
+            # Make available for everyone
             cursor.execute(
                 """
                 UPDATE book_copies 
-                SET is_available = 1, borrowed_by = NULL, borrowed_date = NULL, due_date = NULL
+                SET is_available = 1, borrowed_by = NULL, borrowed_date = NULL, due_date = NULL, state = ?
                 WHERE copy_id = ?
-                """,
-                (copy_id,),
+            """,
+                (new_state, copy_id),
             )
 
         db.commit()
-
         return (
             jsonify(
                 {
                     "message": "Book returned successfully",
-                    "copy_id": copy_id,
-                    "next_user": next_request["user_id"] if next_request else None,
+                    "new_state": new_state,
                     "auto_borrowed": bool(next_request),
                 }
             ),
@@ -438,10 +431,6 @@ def return_book_copy(copy_id):
 
     except Exception as e:
         db.rollback()
-        print(f"Error in return_book_copy: {e}")
-        import traceback
-
-        traceback.print_exc()
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
 

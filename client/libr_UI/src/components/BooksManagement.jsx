@@ -81,7 +81,7 @@ export default function BooksManagement() {
       const data = await response.json();
       setBookCopies((prev) => ({ ...prev, [bookId]: data }));
     } catch (err) {
-      setError("Failed to load copies.");
+      setError(`Failed to load copies, Error:${err}`);
     } finally {
       setLoadingCopies(false);
     }
@@ -105,7 +105,7 @@ export default function BooksManagement() {
         fetchBooks();
       }
     } catch (err) {
-      setError("Server connection failed.");
+      setError(`Server connection failed, Error:${err}`);
     } finally {
       setOpenDeleteDialog(false);
       setBookToDelete(null);
@@ -132,7 +132,7 @@ export default function BooksManagement() {
         setNewCopy({ location: "", publisher: "" });
       }
     } catch (err) {
-      setError("Failed to add copy.");
+      setError(`Failed to add copy, Error:${err}`);
     }
   };
 
@@ -152,7 +152,7 @@ export default function BooksManagement() {
         setError(data.error || "Failed to delete copy.");
       }
     } catch (err) {
-      setError("Error connecting to server.");
+      setError(`Error connecting to server, Error:${err}`);
     }
   };
   if (loading && books.length === 0)
@@ -165,9 +165,7 @@ export default function BooksManagement() {
   return (
     <Box className="bm-container">
       <Box className="abf-header" sx={{ mb: 4, pb: 3 }}>
-        <h1 className="abf-title">
-          Books Management
-        </h1>
+        <h1 className="abf-title">Books Management</h1>
       </Box>
 
       {/* SEARCH BAR */}
@@ -266,6 +264,7 @@ export default function BooksManagement() {
                     <TableRow>
                       <TableCell>Location</TableCell>
                       <TableCell>Publisher</TableCell>
+                      <TableCell>Condition</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell align="right">Action</TableCell>
                     </TableRow>
@@ -275,6 +274,47 @@ export default function BooksManagement() {
                       <TableRow key={copy.copy_id}>
                         <TableCell>{copy.location}</TableCell>
                         <TableCell>{copy.publisher}</TableCell>
+                        {/* CONDITION COLUMN */}
+                        <TableCell sx={{ minWidth: 150 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                flexGrow: 1,
+                                height: 8,
+                                bgcolor: "#eee",
+                                borderRadius: 4,
+                                overflow: "hidden",
+                                position: "relative",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: `${copy.state || 0}%`,
+                                  height: "100%",
+                                  bgcolor:
+                                    copy.state > 70
+                                      ? "#4caf50"
+                                      : copy.state > 30
+                                      ? "#ff9800"
+                                      : "#f44336",
+                                  transition: "width 0.4s ease-in-out",
+                                }}
+                              />
+                            </Box>
+                            <Typography
+                              variant="caption"
+                              sx={{ fontWeight: "bold", minWidth: 30 }}
+                            >
+                              {copy.state}%
+                            </Typography>
+                          </Box>
+                        </TableCell>
                         <TableCell>
                           <Chip
                             label={copy.is_available ? "Available" : "Borrowed"}
@@ -282,6 +322,7 @@ export default function BooksManagement() {
                             size="small"
                           />
                         </TableCell>
+
                         <TableCell align="right">
                           <IconButton
                             size="small"

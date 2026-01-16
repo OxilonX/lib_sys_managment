@@ -83,21 +83,45 @@
   border-radius: 3px 3px 0 0;
 }
 
-.layout-search-field .MuiOutlinedInput-root {
-  background: #f1f5f9;
+.layout-search-container {
+  display: flex;
+  align-items: center;
+  background-color: #f1f5f9;
   border-radius: 20px;
-  width: 200px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 12px;
+  width: 320px;
 }
 
-.layout-search-field .MuiOutlinedInput-root.Mui-focused {
-  background: white;
-  width: 260px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+.layout-search-container:focus-within {
+  background-color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: 380px;
+}
+
+.layout-search-field {
+  flex: 1;
+}
+
+.layout-search-field .MuiOutlinedInput-root,
+.layout-search-field .MuiOutlinedInput-root.Mui-focused,
+.layout-search-field .MuiOutlinedInput-root:hover {
+  background: transparent !important;
 }
 
 .layout-search-field fieldset {
-  border: none;
+  border: none !important;
+}
+
+.MuiSelect-select:focus {
+  background-color: transparent !important;
+}
+
+.search-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #cbd5e1;
+  margin: 0 8px;
 }
 
 .layout-avatar {
@@ -115,5 +139,11 @@
 @media (max-width: 900px) {
   .layout-content {
     padding: 16px;
+  }
+  .layout-search-container {
+    width: 200px;
+  }
+  .layout-search-container:focus-within {
+    width: 240px;
   }
 }

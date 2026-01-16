@@ -18,6 +18,9 @@ import {
   ListItemIcon,
   ListItemText,
   InputAdornment,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import {
   Explore as ExploreIcon,
@@ -40,6 +43,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [filterType, setFilterType] = useState("all");
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -113,23 +117,85 @@ export default function Layout() {
             </Box>
           )}
 
-          {/* RIGHT: Search & Profile */}
+          {/* Search anwddasdasdws Profile */}
           <Box className="layout-right-section">
             {!isMobile && isExplorePage && (
-              <TextField
-                size="small"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="layout-search-field"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "#f1f5f9",
+                  borderRadius: "24px",
+                  padding: "2px 8px",
+                  gap: 0,
+                  transition: "all 0.3s ease",
+                  border: "1px solid transparent",
+                  "&:focus-within": {
+                    backgroundColor: "white",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                    border: "1px solid #5eb3f6",
+                  },
                 }}
-              />
+              >
+                {/* Search Category Dropdown */}
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <Select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    variant="standard" // Use standard to remove the box outline
+                    disableUnderline
+                    sx={{
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      color: "#64748b",
+                      px: 1,
+                    }}
+                  >
+                    <MenuItem value="all">All Fields</MenuItem>
+                    <MenuItem value="title">Title</MenuItem>
+                    <MenuItem value="publisher">Publisher</MenuItem>
+                    <MenuItem value="keywords">Keywords</MenuItem>
+                    <MenuItem value="catCode">Catalog Code</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Vertical Divider Line */}
+                <Box
+                  sx={{
+                    width: "1px",
+                    height: "20px",
+                    bgcolor: "#cbd5e1",
+                    mx: 1,
+                  }}
+                />
+
+                {/* Search Text Field */}
+                <TextField
+                  size="small"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  variant="standard"
+                  InputProps={{
+                    disableUnderline: true,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon
+                          fontSize="small"
+                          sx={{ color: "#64748b" }}
+                        />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    width: { xs: "150px", sm: "200px" },
+                    "& .MuiInputBase-input": {
+                      fontSize: "0.9rem",
+                      py: 1,
+                    },
+                  }}
+                />
+              </Box>
             )}
 
             {isMobile && (
@@ -217,7 +283,7 @@ export default function Layout() {
       </Drawer>
 
       <main className="layout-content">
-        <Outlet />
+        <Outlet context={{ filterType }} />
       </main>
     </Box>
   );
